@@ -4,19 +4,45 @@ Created on Sun Jun 01 11:24:13 2014
 
 @author: koehler
 """
+from scipy.constants import atomic_mass as amu, e as q_e, pi
 
+mm = 1e-3
+cm = 1e-2
+m = 1
+km = 1e3
+
+cm3 = 1e-6
+m3 = 1
+
+g =1e-3
+kg = 1
+
+MeV = q_e*1e6
+
+deg = 2*pi/360
+
+class Material(object):
+    def __init__(self, Z, A, rho):
+        self.Z = Z
+        self.A = A
+        self.rho = rho
+    def get_I(self):
+        """bethe"""
+        return 10 * q_e * self.Z
+    def get_n(self):
+        """ bethe"""
+        return self.Z*self.rho/self.A/amu
+        
 class Volume(object):
-    def __init__(self, fn_image, mm2px=1, material=(8., 16., 1.)):
+    def __init__(self, fn_image, s2px=1e3, material=Material(8., 16., 1.*g/cm3)):
         from scipy.misc import imread
         self.image = imread(fn_image)
-        self.mm2px = mm2px
-        self.Z = material[0]
-        self.A = material[1]
-        self.rho = material[2]*1e3
+        self.s2px = s2px
+        self.material = material
     def is_inside(self, pos_x, pos_y):
         """ """
-        pos_x = int(pos_x*self.mm2px)
-        pos_y = int(pos_y*self.mm2px)
+        pos_x = int(pos_x*self.s2px)
+        pos_y = int(pos_y*self.s2px)
         if self.image.shape[0]<=pos_y or pos_y<0 or \
            self.image.shape[1]<=pos_x or pos_x<0:
             return False
@@ -24,18 +50,13 @@ class Volume(object):
             return True
         else:
             return False
-    def get_I(self):
-        from scipy.constants import e
-        return 10 * e * self.Z
-    def get_n(self):
-        from scipy.constants import atomic_mass as u
-        return self.Z*self.rho/self.A/u
+
 
 class ChargedParticle(object):
     def __init__(self, mass, charge, energy, pos, direction, volume):
-        self.mass = mass       #AMU
+        self.mass = mass
         self.charge = charge    #e
-        self.energy = energy     #MeV
+        self.energy = energy
         self.pos_x = pos[0]
         self.pos_y = pos[1]
         self.dir = direction
@@ -50,12 +71,12 @@ class ChargedParticle(object):
         """
         import numpy as np
         if self.volume.is_inside(self.pos_x, self.pos_y):
-            from scipy.constants import e
-            dE=self.bethe()/e*1e-6 * ds/100
+            dE = self.bethe()* ds
             if dE > self.energy:
                 dE = self.energy
             self.energy -= dE
-        else: dE=0
+        else: 
+            dE = 0
         self.pos_x += np.cos(self.dir)*ds
         self.pos_y += np.sin(self.dir)*ds
         self.path.append((self.pos_x, self.pos_y))
@@ -63,18 +84,19 @@ class ChargedParticle(object):
         return self.pos_x, self.pos_y, dE
     
     def get_velocity(self):
-        from scipy.constants import atomic_mass as u, c, e
+        from scipy.constants import c
         from numpy import sqrt
-        return sqrt(1-(self.energy*e*1e6/(self.mass*u*c**2)+1)**-2)*c
+        return sqrt(1-(self.energy/(self.mass*c**2)+1)**-2)*c
     def bethe(self):
         """
         """
         from numpy import log
-        from scipy.constants import epsilon_0, c, pi, m_e, e
-        I = self.volume.get_I()
-        n = self.volume.get_n()
+        from scipy.constants import epsilon_0, c, pi, m_e
+        I = self.volume.material.get_I()
+        n = self.volume.material.get_n()
         v = self.get_velocity()
-        z = self.charge
+        z = self.charge/q_e
         beta = v/c
-        return 4*pi*n*z**2/(m_e*c**2*beta**2)* (e**2/(4*pi*epsilon_0))**2* \
+        return 4*pi*n*z**2/(m_e*c**2*beta**2)*(q_e**2/(4*pi*epsilon_0))**2* \
             (log(2*m_e*c**2*beta**2/I/(1-beta**2))-beta**2)
+            

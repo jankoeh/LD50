@@ -1,30 +1,20 @@
+# -*- coding: utf-8 -*-
 #!/usr/bin/env python
 
-# embedding_in_qt4.py --- Simple Qt4 application embedding matplotlib canvases
-#
-# Copyright (C) 2005 Florent Rougon
-#               2006 Darren Dale
-#
-# This file is an example program for matplotlib. It may be used and
-# modified with no restriction; raw copies as well as modified versions
-# may be distributed without limitation.
-
-from __future__ import unicode_literals
 import sys, os
 from PyQt4 import QtGui, QtCore
 
-from numpy import arange, sin, pi
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.figure import Figure
+from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
 
 
 progname = os.path.basename(sys.argv[0])
 progversion = "0.1"
 
 
-class MyMplCanvas(FigureCanvas):
+class MyMplCanvas(FigureCanvasQTAgg):
     """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
     def __init__(self, parent=None, width=5, height=8, dpi=100):
+        from matplotlib.figure import Figure
         fig = Figure(figsize=(width, height), dpi=dpi)
         self.axes = fig.add_axes([0,0,1,1])
         #self.axes = fig.add_subplot(111)
@@ -38,33 +28,28 @@ class MyMplCanvas(FigureCanvas):
         self.compute_initial_figure()
 
         #
-        FigureCanvas.__init__(self, fig)
+        FigureCanvasQTAgg.__init__(self, fig)
         self.setParent(parent)
 
-        FigureCanvas.setSizePolicy(self,
+        FigureCanvasQTAgg.setSizePolicy(self,
                                    QtGui.QSizePolicy.Expanding,
                                    QtGui.QSizePolicy.Expanding)
-        FigureCanvas.updateGeometry(self)
+        FigureCanvasQTAgg.updateGeometry(self)
 
     def compute_initial_figure(self):
         pass
 
 
-class MyStaticMplCanvas(MyMplCanvas):
-    """Simple canvas with a sine plot."""
-    def compute_initial_figure(self):
-        t = arange(0.0, 3.0, 0.01)
-        s = sin(2*pi*t)
-        self.axes.plot(t, s)
 
 
 class ParticlePlotCanvas(MyMplCanvas):
     """
     """
     def __init__(self, *args, **kwargs):
-        from physics import ChargedParticle, Volume
+        from physics import ChargedParticle, Volume, MeV, cm, amu, q_e, deg
         volume = Volume("torso.png")
-        self.particle = ChargedParticle(4, 2, 2500, [0, 600], 0, volume)
+        self.particle = ChargedParticle(1*amu, 1*q_e, 150*MeV, 
+                                        [0, 60*cm], 0*deg, volume)
         MyMplCanvas.__init__(self, *args, **kwargs)
         self.axes.set_xlim(0, volume.image.shape[1])
         self.axes.set_ylim(0, volume.image.shape[0])    
@@ -75,24 +60,29 @@ class ParticlePlotCanvas(MyMplCanvas):
 
     def compute_initial_figure(self):
         from matplotlib.pyplot import imread
+        from physics import mm
         image = imread("torso.png")
-        self.axes.imshow(image, extent=(0,1200,0,1200))
-        self.p_line = self.axes.plot([self.particle.pos_x], 
-                                      [self.particle.pos_y], 'bo')[0]
-        self.scat = self.axes.scatter([], [], s=[], alpha=0.2, linewidth=0, c='red')
+        self.axes.imshow(image, extent=(0, 1200, 0, 1200))
+        self.p_line = self.axes.plot([self.particle.pos_x/mm], 
+                                     [self.particle.pos_y/mm], 'bo')[0]
+        self.scat = self.axes.scatter([], [], s=[], c='red',
+                                      alpha=0.2, linewidth=0)
     def update_figure(self):
         # Build a list of 4 random integers between 0 and 10 (both inclusive)
         from numpy import array
+        from physics import MeV, mm
         if self.particle.energy <= 0:
+            self.p_line.set_data([0], [0])
+            self.draw()
             self.timer.stop()
             return            
-        x, y, dE = self.particle.step(20) 
+        x, y, dE = self.particle.step(10.*mm) 
         if x <0 or x >1200 or y<0 or y>1200:
             self.timer.stop()
             return
-        self.scat.set_offsets(self.particle.path)
-        self.scat._sizes = array(self.particle.dE)
-        self.p_line.set_data([self.particle.pos_x], [self.particle.pos_y])
+        self.scat.set_offsets(array(self.particle.path)/mm)
+        self.scat._sizes = (array(self.particle.dE)/MeV)**2 #area->radius
+        self.p_line.set_data([self.particle.pos_x/mm], [self.particle.pos_y/mm])
         self.draw()
 
 
