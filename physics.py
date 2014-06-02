@@ -21,6 +21,19 @@ MeV = q_e*1e6
 
 deg = 2*pi/360
 
+
+def cos_law():
+    from numpy.random import rand
+    from numpy import cos, sin
+    while True:
+        theta = 0.5*rand()*pi
+        y = rand()
+        if y < cos(theta)*sin(theta): 
+            break
+    if rand()>.5:
+        theta *= -1
+    return theta
+
 class Material(object):
     def __init__(self, Z, A, rho):
         self.Z = Z
@@ -46,7 +59,7 @@ class Volume(object):
         if self.image.shape[0]<=pos_y or pos_y<0 or \
            self.image.shape[1]<=pos_x or pos_x<0:
             return False
-        if self.image[pos_y][pos_x][0]>0:
+        if self.image[-pos_y][pos_x][0]>0:
             return True
         else:
             return False
@@ -77,11 +90,13 @@ class ChargedParticle(object):
             self.energy -= dE
         else: 
             dE = 0
+        pos_x = self.pos_x
+        pos_y = self.pos_y
         self.pos_x += np.cos(self.dir)*ds
         self.pos_y += np.sin(self.dir)*ds
-        self.path.append((self.pos_x, self.pos_y))
+        self.path.append((pos_x, pos_y))
         self.dE.append(dE)
-        return self.pos_x, self.pos_y, dE
+        return pos_x, pos_y, dE
     
     def get_velocity(self):
         from scipy.constants import c
