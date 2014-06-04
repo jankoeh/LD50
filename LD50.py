@@ -42,6 +42,7 @@ class ParticlePlotCanvas(MyMplCanvas):
                                         [0, 60*cm], 0*deg)
         self.path = []
         self.dE = [] 
+        self.show_dose_equivalent = False
         MyMplCanvas.__init__(self, *args, **kwargs)
         self.axes.set_xlim(0, WORLD.image.shape[1])
         self.axes.set_ylim(0, WORLD.image.shape[0])    
@@ -68,7 +69,11 @@ class ParticlePlotCanvas(MyMplCanvas):
             self.timer.stop()
             return
         if dE/MeV>0.1:
-            self.dE.append((dE/MeV)**2/4) #area->radius   
+            Q = 1
+            if self.show_dose_equivalent:
+                from physics import quality_factor
+                Q = quality_factor(dE/(10*mm))
+            self.dE.append((Q*dE/MeV)**2/4) #area->radius   
             self.path.append((x/mm, y/mm))
         self.scat.set_offsets(self.path)
         self.scat._sizes = self.dE 
@@ -105,7 +110,7 @@ class ApplicationWindow(QtGui.QMainWindow):
         l = QtGui.QHBoxLayout(self.main_widget)
         
         ui_grid = QtGui.QGridLayout()
-        ui_grid.addWidget(QtGui.QLabel("Strahlungsart"), 0, 0)
+        ui_grid.addWidget(QtGui.QLabel("Strahlungsart:"), 0, 0)
         self.selector = QtGui.QComboBox()
         self.selector.addItem("Proton")
         self.selector.addItem("Alpha")
@@ -113,32 +118,37 @@ class ApplicationWindow(QtGui.QMainWindow):
         self.selector.addItem("Muon")
         self.selector.addItem("Neutron")
         ui_grid.addWidget(self.selector, 0, 1)
-        ui_grid.addWidget(QtGui.QLabel("Energy / MeV"), 1, 0)
+        ui_grid.addWidget(QtGui.QLabel("Energie / MeV"), 1, 0)
         self.energy = QtGui.QLineEdit("50")
-        ui_grid.addWidget(self.energy)
+        ui_grid.addWidget(self.energy, 1, 1)
+
+        ui_grid.addWidget(QtGui.QLabel("Einfallsrichtung:"), 2, 0)
+        self.sel_dir = QtGui.QComboBox()
+        self.sel_dir.addItems(['Isotrop', 'Strahl'])
+        ui_grid.addWidget(self.sel_dir, 2, 1)
         
-        ui_grid.addWidget(QtGui.QLabel("Schaden in:"))
+        ui_grid.addWidget(QtGui.QLabel("Schaden in:"), 3, 0)
         self.b_gray = QtGui.QRadioButton("Gray (Dosis)")
         self.b_gray.setChecked(True)
-        self.b_sievert = QtGui.QRadioButton("Sievert (equivalent Dosis)")
-        ui_grid.addWidget(self.b_gray, 2, 1)
-        ui_grid.addWidget(self.b_sievert, 3, 1)
+        self.b_sievert = QtGui.QRadioButton(u"Sievert (Äquivalentdosis)")
+        ui_grid.addWidget(self.b_gray, 3, 1)
+        ui_grid.addWidget(self.b_sievert, 4, 1)
         
         
-        ui_grid.addWidget(QtGui.QLabel("Anzahl Ereignisse:"), 4, 0)    
+        ui_grid.addWidget(QtGui.QLabel("Anzahl Ereignisse:"), 5, 0)    
         self.b_shots = QtGui.QSpinBox()
         self.b_shots.setValue(1)
         self.b_shots.setMinimum(1)
         self.b_shots.setMaximum(100)
         self.b_shots.setEnabled(False)
-        ui_grid.addWidget(self.b_shots, 4, 1)        
+        ui_grid.addWidget(self.b_shots, 5, 1)        
         
         btn_start = QtGui.QPushButton("Start")
         btn_start.clicked.connect(self.start_run)
-        btn_clear = QtGui.QPushButton("Clear")
+        btn_clear = QtGui.QPushButton(u"Zurücksetzen")
         btn_clear.clicked.connect(self.clear)
-        ui_grid.addWidget(btn_start, 5, 0)
-        ui_grid.addWidget(btn_clear, 5, 1)
+        ui_grid.addWidget(btn_start, 6, 0)
+        ui_grid.addWidget(btn_clear, 6, 1)
         
                 
         
@@ -164,8 +174,8 @@ class ApplicationWindow(QtGui.QMainWindow):
 
     def about(self):
         QtGui.QMessageBox.about(self, "About",
-"""LD50
-A tool to visualize the effect of radiation on the human body.
+u"""LD50
+Ein Tool zur Visualisierung von Strahlenschäden .
 """
 )
     def start_run(self):
@@ -177,24 +187,31 @@ A tool to visualize the effect of radiation on the human body.
     def clear(self):
         self.rad_plot.timer.stop() 
         self.rad_plot.clear_figure()
+        
     def particle_generator(self):
         from physics import Particle, cos_law, mm
         from physics import MeV, amu, q_e, deg
         from numpy.random import rand
+        self.rad_plot.show_dose_equivalent = self.b_sievert.isChecked()
         energy = float(self.energy.text())
-        pos = (rand()*1200*2+800)*mm
-        if pos < 1200*mm:
-            direction = cos_law()
+        if self.sel_dir.currentText() == "Isotrop":
+            pos = (rand()*1200*2+800)*mm
+            if pos < 1200*mm:
+                direction = cos_law()
+                pos_x = 0
+                pos_y = pos
+            elif pos < (1200+800)*mm:
+                direction = cos_law() + 270*deg
+                pos_x = pos-1200*mm
+                pos_y = 1200*mm
+            else:   
+                direction = cos_law() + 180*deg
+                pos_x = 800*mm
+                pos_y = pos -2000*mm
+        elif self.sel_dir.currentText() == "Strahl":
+            direction = 0*deg
             pos_x = 0
-            pos_y = pos
-        elif pos < (1200+800)*mm:
-            direction = cos_law() + 270*deg
-            pos_x = pos-1200*mm
-            pos_y = 1200*mm
-        else:   
-            direction = cos_law() + 180*deg
-            pos_x = 800*mm
-            pos_y = pos -2000*mm
+            pos_y = 550*mm+rand()*100*mm
         
         if self.selector.currentText()=="Proton":
             self.rad_plot.particle = Particle(1*amu, 1*q_e, energy*MeV, 

@@ -8,6 +8,7 @@ from scipy.constants import atomic_mass as amu, e as q_e, pi, m_e
 from scipy.constants import physical_constants
 m_muon = physical_constants['muon mass'][0]
 
+um = 1e-6
 mm = 1e-3
 cm = 1e-2
 m = 1
@@ -20,10 +21,22 @@ g =1e-3
 kg = 1
 
 eV = q_e
+keV = q_e*1e3
 MeV = q_e*1e6
 
 deg = 2*pi/360
 
+def quality_factor(L):
+    """
+    Quality factor according to wikipedia
+    """
+    from numpy import sqrt
+    if L < 10*keV/um:
+        return 1
+    elif L < 100*keV/um:
+        return 0.32*L-2.2
+    else:
+        300./sqrt(L)
 
 def cos_law():
     from numpy.random import rand
@@ -48,6 +61,15 @@ class Material(object):
     def get_n(self):
         """important for bethe"""
         return self.Z*self.rho/self.A/amu
+
+class Water(Material):
+    def get_I(self):
+        return 75*q_e
+    def get_n(self):
+        return 3.3456e29/m3
+    def get_neutron_mfp(self):
+        #FIXME TODO
+        return 10*cm
         
 class Volume(object):
     def __init__(self, fn_image, s2px=1e3, material=Material(8., 16., 1.*g/cm3)):
@@ -73,11 +95,11 @@ class Volume(object):
             return 1e-30, 0 
     def get_neutron_mfp(self, pos_x, pos_y):
         if self.is_inside(pos_x, pos_y):
-            return 10*cm
+            return self.material.get_neutron_mfp()
         else:
             return 1e30
 
-WORLD = Volume('torso2.png', material=Material(8., 16., 1.*g/cm3))
+WORLD = Volume('torso2.png', material=Water(8., 16., 1.*g/cm3))
 
 class Particle(object):
     def __init__(self, mass, charge, energy, pos, direction):
@@ -134,7 +156,7 @@ class Neutron(Particle):
             dE = self.energy
         self.energy -= dE
         if dE:
-            self.dir += rand()*80*deg-40*deg
+            self.dir += rand()*40*deg-20*deg
         pos_x = self.pos_x
         pos_y = self.pos_y
         self.pos_x += np.cos(self.dir)*ds
