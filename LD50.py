@@ -12,9 +12,9 @@ class MyMplCanvas(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=8, dpi=100):
         from matplotlib.figure import Figure
         fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = fig.add_axes([0,0,1,1])
-        self.axes.set_xlim(0,1)
-        self.axes.set_ylim(0,1)        
+        self.axes = fig.add_axes([0, 0, 1, 1])
+        self.axes.set_xlim(0, 1)
+        self.axes.set_ylim(0, 1)
         self.axes.set_xticks([])
         self.axes.set_yticks([])
         self.compute_initial_figure()
@@ -23,8 +23,8 @@ class MyMplCanvas(FigureCanvasQTAgg):
         self.setParent(parent)
 
         FigureCanvasQTAgg.setSizePolicy(self,
-                                   QtGui.QSizePolicy.Expanding,
-                                   QtGui.QSizePolicy.Expanding)
+                                        QtGui.QSizePolicy.Expanding,
+                                        QtGui.QSizePolicy.Expanding)
         FigureCanvasQTAgg.updateGeometry(self)
 
     def compute_initial_figure(self):
@@ -37,61 +37,63 @@ class ParticlePlotCanvas(MyMplCanvas):
     """
     """
     def __init__(self, *args, **kwargs):
-        from physics import ChargedParticle,  MeV, cm, amu, q_e, deg, WORLD
-        self.ChargedParticle = ChargedParticle(1*amu, 1*q_e, 150*MeV, 
-                                        [0, 60*cm], 0*deg)
+        from physics import ChargedParticle, MeV, cm, amu, q_e, deg, WORLD
+        self.particle = ChargedParticle(1*amu, 1*q_e, 150*MeV,
+                                               [0, 60*cm], 0*deg)
         self.path = []
-        self.dE = [] 
+        self.dE = []
         self.show_dose_equivalent = False
         MyMplCanvas.__init__(self, *args, **kwargs)
         self.axes.set_xlim(0, WORLD.image.shape[1])
-        self.axes.set_ylim(0, WORLD.image.shape[0])    
+        self.axes.set_ylim(0, WORLD.image.shape[0])
         self.timer = QtCore.QTimer(self)
-        QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.update_figure)
+        QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), \
+                               self.update_figure)
 
     def compute_initial_figure(self):
         from matplotlib.pyplot import imread
         from physics import WORLD
         image = imread("torso2.png")
-        self.axes.imshow(image, extent=(0, WORLD.image.shape[1], 0, WORLD.image.shape[0]))
+        self.axes.imshow(image, extent=(0, WORLD.image.shape[1],\
+                                        0, WORLD.image.shape[0]))
         self.p_line = self.axes.plot([], [], 'bo')[0]
         self.scat = self.axes.scatter([], [], s=[], c='red',
                                       alpha=0.4, linewidth=0)
     def update_figure(self):
         from physics import MeV, mm, WORLD
         ds = 10*mm
-        
-        N=2
-        for i in xrange(N):        
-            x, y, dE = self.particle.step(ds/N) 
-            if dE/MeV>0.01:
+
+        N = 2
+        for i in xrange(N):
+            x, y, dE = self.particle.step(ds/N)
+            if dE/MeV > 0.01:
                 Q = 1
                 if self.show_dose_equivalent:
                     from physics import quality_factor
                     Q = quality_factor(dE/(ds/N))
-                self.dE.append((Q*dE/MeV)**2/4) #area->radius   
+                self.dE.append((Q*dE/MeV)**2/4) #area->radius
                 self.path.append((x/mm, y/mm))
             if self.particle.energy <= 0:
                 break
-            
+
         self.scat.set_offsets(self.path)
-        self.scat._sizes = self.dE 
+        self.scat._sizes = self.dE
         self.p_line.set_data([self.particle.pos_x/mm], [self.particle.pos_y/mm])
         self.draw()
-        if self.particle.energy <= 0 or x <0 or x/mm >WORLD.image.shape[1] or \
-        y<0 or y/mm>WORLD.image.shape[0]:
+        if self.particle.energy <= 0 or x < 0 or x/mm >WORLD.image.shape[1] or\
+           y < 0 or y/mm > WORLD.image.shape[0]:
             self.p_line.set_data([], [])
             self.draw()
             self.timer.stop()
-     
-    def clear_figure(self): 
+
+    def clear_figure(self):
         self.path = []
         self.dE = []
         self.scat.set_offsets(self.path)
         self.scat._sizes = self.dE
         self.draw()
-  
-        
+
+
 class ApplicationWindow(QtGui.QMainWindow):
     def __init__(self):
         QtGui.QMainWindow.__init__(self)
@@ -112,7 +114,7 @@ class ApplicationWindow(QtGui.QMainWindow):
         self.main_widget = QtGui.QWidget(self)
 
         l = QtGui.QHBoxLayout(self.main_widget)
-        
+
         ui_grid = QtGui.QGridLayout()
         ui_grid.addWidget(QtGui.QLabel("Strahlungsart:"), 0, 0)
         self.selector = QtGui.QComboBox()
@@ -130,37 +132,38 @@ class ApplicationWindow(QtGui.QMainWindow):
         self.sel_dir = QtGui.QComboBox()
         self.sel_dir.addItems(['Isotrop', 'Strahl'])
         ui_grid.addWidget(self.sel_dir, 2, 1)
-        
+
         ui_grid.addWidget(QtGui.QLabel("Schaden in:"), 3, 0)
         self.b_gray = QtGui.QRadioButton("Gray (Dosis)")
         self.b_gray.setChecked(True)
         self.b_sievert = QtGui.QRadioButton(u"Sievert (Äquivalentdosis)")
         ui_grid.addWidget(self.b_gray, 3, 1)
         ui_grid.addWidget(self.b_sievert, 4, 1)
-        
-        
-        ui_grid.addWidget(QtGui.QLabel("Anzahl Ereignisse:"), 5, 0)    
+
+
+        ui_grid.addWidget(QtGui.QLabel("Anzahl Ereignisse:"), 5, 0)
         self.b_shots = QtGui.QSpinBox()
         self.b_shots.setValue(1)
         self.b_shots.setMinimum(1)
         self.b_shots.setMaximum(100)
         self.b_shots.setEnabled(False)
-        ui_grid.addWidget(self.b_shots, 5, 1)        
-        
+        ui_grid.addWidget(self.b_shots, 5, 1)
+
         btn_start = QtGui.QPushButton("Start")
         btn_start.clicked.connect(self.start_run)
         btn_clear = QtGui.QPushButton(u"Zurücksetzen")
         btn_clear.clicked.connect(self.clear)
         ui_grid.addWidget(btn_start, 6, 0)
         ui_grid.addWidget(btn_clear, 6, 1)
-        
-                
-        
+
+
+
         ui_widget = QtGui.QWidget(self.main_widget)
         ui_widget.setLayout(ui_grid)
 
         #sc = MyStaticMplCanvas(self.main_widget, width=5, height=4, dpi=100)
-        self.rad_plot = ParticlePlotCanvas(self.main_widget, width=3, height=4, dpi=100)
+        self.rad_plot = ParticlePlotCanvas(self.main_widget, width=3,\
+                                           height=4, dpi=100)
         l.addWidget(ui_widget)
         #l.addWidget(sc)
         l.addWidget(self.rad_plot)
@@ -189,9 +192,9 @@ Ein Tool zur Visualisierung von Strahlenschäden .
         self.rad_plot.timer.start(10)
 
     def clear(self):
-        self.rad_plot.timer.stop() 
+        self.rad_plot.timer.stop()
         self.rad_plot.clear_figure()
-        
+
     def particle_generator(self):
         from physics import ChargedParticle, cos_law, mm
         from physics import MeV, amu, q_e, deg
@@ -208,7 +211,7 @@ Ein Tool zur Visualisierung von Strahlenschäden .
                 direction = cos_law() + 270*deg
                 pos_x = pos-1200*mm
                 pos_y = 1200*mm
-            else:   
+            else:
                 direction = cos_law() + 180*deg
                 pos_x = 800*mm
                 pos_y = pos -2000*mm
@@ -216,26 +219,26 @@ Ein Tool zur Visualisierung von Strahlenschäden .
             direction = 0*deg
             pos_x = 0
             pos_y = 550*mm+rand()*100*mm
-        
-        if self.selector.currentText()=="Proton":
-            self.rad_plot.particle = ChargedParticle(1*amu, 1*q_e, energy*MeV, 
+
+        if self.selector.currentText() == "Proton":
+            self.rad_plot.particle = ChargedParticle(1*amu, 1*q_e, energy*MeV,
                                         [pos_x, pos_y], direction)
-        elif self.selector.currentText()=="Alpha":
-            self.rad_plot.particle = ChargedParticle(4*amu, 2*q_e, energy*MeV, 
+        elif self.selector.currentText() == "Alpha":
+            self.rad_plot.particle = ChargedParticle(4*amu, 2*q_e, energy*MeV,
                                         [pos_x, pos_y], direction)
-        elif self.selector.currentText()=="Elektron":
+        elif self.selector.currentText() == "Elektron":
             from physics import m_e
-            self.rad_plot.particle = ChargedParticle(m_e, q_e, energy*MeV, 
+            self.rad_plot.particle = ChargedParticle(m_e, q_e, energy*MeV,
                                         [pos_x, pos_y], direction)
-        elif self.selector.currentText()=="Muon":
+        elif self.selector.currentText() == "Muon":
             from physics import m_muon
-            self.rad_plot.particle = ChargedParticle(m_muon, q_e, energy*MeV, 
+            self.rad_plot.particle = ChargedParticle(m_muon, q_e, energy*MeV,
                                         [pos_x, pos_y], direction)
-        elif self.selector.currentText()=="Neutron":
+        elif self.selector.currentText() == "Neutron":
             from physics import Neutron
-            self.rad_plot.particle = Neutron(amu, 0, energy*MeV, 
+            self.rad_plot.particle = Neutron(amu, 0, energy*MeV,
                                         [pos_x, pos_y], direction)
-                                        
+
 qApp = QtGui.QApplication(sys.argv)
 aw = ApplicationWindow()
 aw.show()

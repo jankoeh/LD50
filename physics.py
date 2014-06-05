@@ -25,7 +25,7 @@ km = 1e3
 cm3 = 1e-6
 m3 = 1
 
-g =1e-3
+g = 1e-3
 kg = 1
 
 eV = q_e
@@ -44,17 +44,21 @@ def quality_factor(L):
     elif L < 100*keV/um:
         return 0.32*L-2.2
     else:
-        300./sqrt(L)
+        return 300./sqrt(L)
 
 def cos_law():
+    """
+    Returns a cosine law angle.
+    Used to generate an isotropic distribution
+    """
     from numpy.random import rand
     from numpy import cos, sin
     while True:
         theta = 0.5*rand()*pi
         y = rand()
-        if y < cos(theta)*sin(theta): 
+        if y < cos(theta)*sin(theta):
             break
-    if rand()>.5:
+    if rand() > .5:
         theta *= -1
     return theta
 
@@ -65,12 +69,12 @@ class Material(object):
         self.rho = rho
     def get_mean_ex_pot(self):
         """
-        returns the means excitation potential        
+        returns the means excitation potential
         """
         return 10 * q_e * self.Z
     def get_e_density(self):
         """
-        returns the material specific electron density        
+        returns the material specific electron density
         """
         return self.Z*self.rho/self.A/amu
     def get_neutron_mfp(self, energy):
@@ -85,9 +89,10 @@ class Water(Material):
     def get_neutron_mfp(self, energy):
         #FIXME TODO
         return 10*cm
-        
+
 class Volume(object):
-    def __init__(self, fn_image, s2px=1e3, material=Material(8., 16., 1.*g/cm3)):
+    def __init__(self, fn_image, s2px=1e3,\
+                 material=Material(8., 16., 1.*g/cm3)):
         from scipy.misc import imread
         self.image = imread(fn_image)
         self.s2px = s2px
@@ -105,13 +110,13 @@ class Volume(object):
             return False
     def get_mexpot_edens(self, pos_x, pos_y):
         """
-        Returns a tuple o the 
+        Returns a tuple o the
         means excitation potential and the electron density
         """
         if self.is_inside(pos_x, pos_y):
             return self.material.get_I(), self.material.get_n()
         else:
-            return 1e-30, 0 
+            return 1e-30, 0
     def get_neutron_mfp(self, pos_x, pos_y, energy):
         """
         Returns the mean free path for neutrons
@@ -131,7 +136,7 @@ class Particle(object):
         self.pos_x = pos[0]
         self.pos_y = pos[1]
         self.dir = direction
-        
+
         self.path = []
         self.dE = []
 
@@ -151,7 +156,7 @@ class Particle(object):
         self.pos_x += np.cos(self.dir)*ds
         self.pos_y += np.sin(self.dir)*ds
         return pos_x, pos_y, dE
-    
+
     def get_velocity(self):
         """Returns the particle velocity"""
         from numpy import sqrt
@@ -161,7 +166,7 @@ class Particle(object):
     def energy_loss(self, ds):
         """
         Prototype funktion for energy_loss and angular scattering
-        """        
+        """
         return 0
 
 
@@ -171,14 +176,14 @@ class ChargedParticle(Particle):
         Beethe Bloch
         """
         from numpy import log
-        I, n = WORLD.get_mexpot_edens(self.pos_x, self.pos_y)
+        mexpot, edens = WORLD.get_mexpot_edens(self.pos_x, self.pos_y)
         v = self.get_velocity()
         z = self.charge/q_e
         beta = v/c_light
-        return 4*pi*n*z**2/(m_e*c_light**2*beta**2)*\
+        return 4*pi*edens*z**2/(m_e*c_light**2*beta**2)*\
             (q_e**2/(4*pi*epsilon_0))**2* \
-            (log(2*m_e*c_light**2*beta**2/I/(1-beta**2))-beta**2)*ds    
-            
+            (log(2*m_e*c_light**2*beta**2/mexpot/(1-beta**2))-beta**2)*ds
+
 class Neutron(Particle):
     def energy_loss(self, ds):
         """
