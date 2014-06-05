@@ -63,7 +63,7 @@ class ParticlePlotCanvas(MyMplCanvas):
         from physics import MeV, mm, WORLD
         ds = 10*mm
 
-        N = 2
+        N = 1
         for i in xrange(N):
             x, y, dE = self.particle.step(ds/N)
             if dE/MeV > 0.01:
@@ -120,6 +120,7 @@ class ApplicationWindow(QtGui.QMainWindow):
         self.selector = QtGui.QComboBox()
         self.selector.addItem("Proton")
         self.selector.addItem("Alpha")
+        self.selector.addItem("Kohlenstoff")
         self.selector.addItem("Elektron")
         self.selector.addItem("Muon")
         self.selector.addItem("Neutron")
@@ -189,7 +190,7 @@ Ein Tool zur Visualisierung von Strahlenschäden .
         #for i in xrange(self.b_shots.value()):
         self.rad_plot.timer.stop()
         self.particle_generator()
-        self.rad_plot.timer.start(10)
+        self.rad_plot.timer.start(20)
 
     def clear(self):
         self.rad_plot.timer.stop()
@@ -226,6 +227,9 @@ Ein Tool zur Visualisierung von Strahlenschäden .
         elif self.selector.currentText() == "Alpha":
             self.rad_plot.particle = ChargedParticle(4*amu, 2*q_e, energy*MeV,
                                         [pos_x, pos_y], direction)
+        elif self.selector.currentText() == "Kohlenstoff":
+            self.rad_plot.particle = ChargedParticle(6*amu, 12*q_e, energy*MeV,
+                                        [pos_x, pos_y], direction)                                        
         elif self.selector.currentText() == "Elektron":
             from physics import m_e
             self.rad_plot.particle = ChargedParticle(m_e, q_e, energy*MeV,

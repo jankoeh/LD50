@@ -34,6 +34,8 @@ MeV = q_e*1e6
 
 deg = 2*pi/360
 
+barn = 1e-28
+
 def quality_factor(L):
     """
     Quality factor according to wikipedia
@@ -82,13 +84,33 @@ class Material(object):
         return 1e30*m
 
 class Water(Material):
+    def __init__(self, load_x_sections=True):
+        super(Water, self).__init__(8., 16., 1.*g/cm3)      
+        if load_x_sections:
+            from numpy import loadtxt
+            from scipy.interpolate import interp1d
+            energy_H = loadtxt("n_x_section_H.txt", 
+                               usecols=[0,2,4],skiprows=2).ravel()
+            sigma_H = loadtxt("n_x_section_H.txt", 
+                              usecols=[1,3,5], skiprows=2).ravel()
+            energy_O = loadtxt("n_x_section_O.txt",
+                               usecols=[0,2,4], skiprows=2).ravel()
+            sigma_O = loadtxt("n_x_section_O.txt", 
+                              usecols=[1,3,5], skiprows=2).ravel()
+            self.xsec_H = interp1d(energy_H*eV, sigma_H*barn)
+            self.xsec_O = interp1d(energy_O*eV, sigma_O*barn)
+            self.n_dens_H = 2*33.3679e27/m3
+            self.n_dens_O = 33.3679e27/m3
     def get_I(self):
         return 75*q_e
     def get_n(self):
         return 3.3456e29/m3
     def get_neutron_mfp(self, energy):
-        #FIXME TODO
-        return 10*cm
+        """
+        returns mfp for H and O
+        """
+        return [1./(self.n_dens_H*self.xsec_H(energy)),
+               1./(self.n_dens_O*self.xsec_O(energy))]
 
 class Volume(object):
     def __init__(self, fn_image, s2px=1e3,\
@@ -121,12 +143,12 @@ class Volume(object):
         """
         Returns the mean free path for neutrons
         """
-        if self.is_inside(pos_x, pos_y):
+        if self.is_inside(pos_x, pos_y):            
             return self.material.get_neutron_mfp(energy)
         else:
-            return 1e30
+            return []
 
-WORLD = Volume('torso2.png', material=Water(8., 16., 1.*g/cm3))
+WORLD = Volume('torso2.png', material=Water())
 
 class Particle(object):
     def __init__(self, mass, charge, energy, pos, direction):
@@ -191,9 +213,9 @@ class Neutron(Particle):
         """
         from numpy.random import rand
         dE = 0
-        mfp = WORLD.get_neutron_mfp(self.pos_x, self.pos_y, self.energy)
-        if ds/mfp> rand():
-            dE = min((20*MeV, self.energy*rand()))
-        if dE > 10*keV:
-            self.dir += rand()*40*deg-20*deg
+        for mfp in WORLD.get_neutron_mfp(self.pos_x, self.pos_y, self.energy):
+            if ds/mfp> rand():
+                dE += min((20*MeV, self.energy*rand()))
+            if dE > 10*keV:
+                self.dir += rand()*40*deg-20*deg
         return dE
