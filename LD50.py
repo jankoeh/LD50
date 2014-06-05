@@ -37,8 +37,8 @@ class ParticlePlotCanvas(MyMplCanvas):
     """
     """
     def __init__(self, *args, **kwargs):
-        from physics import Particle,  MeV, cm, amu, q_e, deg, WORLD
-        self.particle = Particle(1*amu, 1*q_e, 150*MeV, 
+        from physics import ChargedParticle,  MeV, cm, amu, q_e, deg, WORLD
+        self.ChargedParticle = ChargedParticle(1*amu, 1*q_e, 150*MeV, 
                                         [0, 60*cm], 0*deg)
         self.path = []
         self.dE = [] 
@@ -59,27 +59,31 @@ class ParticlePlotCanvas(MyMplCanvas):
                                       alpha=0.4, linewidth=0)
     def update_figure(self):
         from physics import MeV, mm, WORLD
-        if self.particle.energy <= 0:
-            self.p_line.set_data([], [])
-            self.draw()
-            self.timer.stop()
-            return            
-        x, y, dE = self.particle.step(10.*mm) 
-        if x <0 or x/mm >WORLD.image.shape[1] or y<0 or y/mm>WORLD.image.shape[0]:
-            self.timer.stop()
-            return
-        if dE/MeV>0.1:
-            Q = 1
-            if self.show_dose_equivalent:
-                from physics import quality_factor
-                Q = quality_factor(dE/(10*mm))
-            self.dE.append((Q*dE/MeV)**2/4) #area->radius   
-            self.path.append((x/mm, y/mm))
+        ds = 10*mm
+        
+        N=2
+        for i in xrange(N):        
+            x, y, dE = self.particle.step(ds/N) 
+            if dE/MeV>0.01:
+                Q = 1
+                if self.show_dose_equivalent:
+                    from physics import quality_factor
+                    Q = quality_factor(dE/(ds/N))
+                self.dE.append((Q*dE/MeV)**2/4) #area->radius   
+                self.path.append((x/mm, y/mm))
+            if self.particle.energy <= 0:
+                break
+            
         self.scat.set_offsets(self.path)
         self.scat._sizes = self.dE 
         self.p_line.set_data([self.particle.pos_x/mm], [self.particle.pos_y/mm])
         self.draw()
-
+        if self.particle.energy <= 0 or x <0 or x/mm >WORLD.image.shape[1] or \
+        y<0 or y/mm>WORLD.image.shape[0]:
+            self.p_line.set_data([], [])
+            self.draw()
+            self.timer.stop()
+     
     def clear_figure(self): 
         self.path = []
         self.dE = []
@@ -189,7 +193,7 @@ Ein Tool zur Visualisierung von Strahlenschäden .
         self.rad_plot.clear_figure()
         
     def particle_generator(self):
-        from physics import Particle, cos_law, mm
+        from physics import ChargedParticle, cos_law, mm
         from physics import MeV, amu, q_e, deg
         from numpy.random import rand
         self.rad_plot.show_dose_equivalent = self.b_sievert.isChecked()
@@ -214,18 +218,18 @@ Ein Tool zur Visualisierung von Strahlenschäden .
             pos_y = 550*mm+rand()*100*mm
         
         if self.selector.currentText()=="Proton":
-            self.rad_plot.particle = Particle(1*amu, 1*q_e, energy*MeV, 
+            self.rad_plot.particle = ChargedParticle(1*amu, 1*q_e, energy*MeV, 
                                         [pos_x, pos_y], direction)
         elif self.selector.currentText()=="Alpha":
-            self.rad_plot.particle = Particle(4*amu, 2*q_e, energy*MeV, 
+            self.rad_plot.particle = ChargedParticle(4*amu, 2*q_e, energy*MeV, 
                                         [pos_x, pos_y], direction)
         elif self.selector.currentText()=="Elektron":
             from physics import m_e
-            self.rad_plot.particle = Particle(m_e, q_e, energy*MeV, 
+            self.rad_plot.particle = ChargedParticle(m_e, q_e, energy*MeV, 
                                         [pos_x, pos_y], direction)
         elif self.selector.currentText()=="Muon":
             from physics import m_muon
-            self.rad_plot.particle = Particle(m_muon, q_e, energy*MeV, 
+            self.rad_plot.particle = ChargedParticle(m_muon, q_e, energy*MeV, 
                                         [pos_x, pos_y], direction)
         elif self.selector.currentText()=="Neutron":
             from physics import Neutron
@@ -233,7 +237,6 @@ Ein Tool zur Visualisierung von Strahlenschäden .
                                         [pos_x, pos_y], direction)
                                         
 qApp = QtGui.QApplication(sys.argv)
-
 aw = ApplicationWindow()
 aw.show()
 sys.exit(qApp.exec_())

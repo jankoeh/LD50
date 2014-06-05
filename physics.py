@@ -4,10 +4,18 @@ Created on Sun Jun 01 11:24:13 2014
 
 @author: koehler
 """
-from scipy.constants import atomic_mass as amu, e as q_e, pi, m_e
+#constants
+from scipy.constants import \
+    atomic_mass as amu,\
+    e as q_e, \
+    pi, \
+    m_e, \
+    c as c_light,\
+    epsilon_0
 from scipy.constants import physical_constants
 m_muon = physical_constants['muon mass'][0]
 
+#Units
 um = 1e-6
 mm = 1e-3
 cm = 1e-2
@@ -55,19 +63,26 @@ class Material(object):
         self.Z = Z
         self.A = A
         self.rho = rho
-    def get_I(self):
-        """important for bethe"""
+    def get_mean_ex_pot(self):
+        """
+        returns the means excitation potential        
+        """
         return 10 * q_e * self.Z
-    def get_n(self):
-        """important for bethe"""
+    def get_e_density(self):
+        """
+        returns the material specific electron density        
+        """
         return self.Z*self.rho/self.A/amu
+    def get_neutron_mfp(self, energy):
+        """Neutron mean free path length"""
+        return 1e30*m
 
 class Water(Material):
     def get_I(self):
         return 75*q_e
     def get_n(self):
         return 3.3456e29/m3
-    def get_neutron_mfp(self):
+    def get_neutron_mfp(self, energy):
         #FIXME TODO
         return 10*cm
         
@@ -88,14 +103,21 @@ class Volume(object):
             return True
         else:
             return False
-    def get_In(self, pos_x, pos_y):
+    def get_mexpot_edens(self, pos_x, pos_y):
+        """
+        Returns a tuple o the 
+        means excitation potential and the electron density
+        """
         if self.is_inside(pos_x, pos_y):
             return self.material.get_I(), self.material.get_n()
         else:
             return 1e-30, 0 
-    def get_neutron_mfp(self, pos_x, pos_y):
+    def get_neutron_mfp(self, pos_x, pos_y, energy):
+        """
+        Returns the mean free path for neutrons
+        """
         if self.is_inside(pos_x, pos_y):
-            return self.material.get_neutron_mfp()
+            return self.material.get_neutron_mfp(energy)
         else:
             return 1e30
 
@@ -119,8 +141,8 @@ class Particle(object):
         """
         import numpy as np
 
-        dE = self.energy_loss()* ds
-        if dE > self.energy:
+        dE = self.energy_loss(ds)
+        if dE > self.energy-10*eV:
             dE = self.energy
         self.energy -= dE
 
@@ -131,44 +153,42 @@ class Particle(object):
         return pos_x, pos_y, dE
     
     def get_velocity(self):
-        from scipy.constants import c
+        """Returns the particle velocity"""
         from numpy import sqrt
-        return sqrt(1-(self.energy/(self.mass*c**2)+1)**-2)*c
-    def energy_loss(self):
+        if self.energy == 0:
+            return 0
+        return sqrt(1-(self.energy/(self.mass*c_light**2)+1)**-2)*c_light
+    def energy_loss(self, ds):
+        """
+        Prototype funktion for energy_loss and angular scattering
+        """        
+        return 0
+
+
+class ChargedParticle(Particle):
+    def energy_loss(self, ds):
         """
         Beethe Bloch
         """
         from numpy import log
-        from scipy.constants import epsilon_0, c, pi
-        I, n = WORLD.get_In(self.pos_x, self.pos_y)
+        I, n = WORLD.get_mexpot_edens(self.pos_x, self.pos_y)
         v = self.get_velocity()
         z = self.charge/q_e
-        beta = v/c
-        return 4*pi*n*z**2/(m_e*c**2*beta**2)*(q_e**2/(4*pi*epsilon_0))**2* \
-            (log(2*m_e*c**2*beta**2/I/(1-beta**2))-beta**2)
+        beta = v/c_light
+        return 4*pi*n*z**2/(m_e*c_light**2*beta**2)*\
+            (q_e**2/(4*pi*epsilon_0))**2* \
+            (log(2*m_e*c_light**2*beta**2/I/(1-beta**2))-beta**2)*ds    
             
 class Neutron(Particle):
-    def step(self, ds):
-        import numpy as np
-        from numpy.random import rand
-        dE = self.energy_loss(ds)
-        if dE > self.energy-10*eV:
-            dE = self.energy
-        self.energy -= dE
-        if dE:
-            self.dir += rand()*40*deg-20*deg
-        pos_x = self.pos_x
-        pos_y = self.pos_y
-        self.pos_x += np.cos(self.dir)*ds
-        self.pos_y += np.sin(self.dir)*ds
-        return pos_x, pos_y, dE        
     def energy_loss(self, ds):
         """
         straggeling
         """
         from numpy.random import rand
         dE = 0
-        mfp = WORLD.get_neutron_mfp(self.pos_x, self.pos_y)
+        mfp = WORLD.get_neutron_mfp(self.pos_x, self.pos_y, self.energy)
         if ds/mfp> rand():
             dE = min((20*MeV, self.energy*rand()))
+        if dE > 10*keV:
+            self.dir += rand()*40*deg-20*deg
         return dE
