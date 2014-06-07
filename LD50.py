@@ -49,6 +49,7 @@ class ParticlePlotCanvas(MyMplCanvas):
         self.timer = QtCore.QTimer(self)
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), \
                                self.update_figure)
+        self.size = 30
 
     def compute_initial_figure(self):
         from matplotlib.pyplot import imread
@@ -60,28 +61,26 @@ class ParticlePlotCanvas(MyMplCanvas):
         self.scat = self.axes.scatter([], [], s=[], c='red',
                                       alpha=0.4, linewidth=0)
     def update_figure(self):
-        from physics import MeV, mm, WORLD
+        from physics import MeV, eV, mm, WORLD
         ds = 10*mm
-
-        N = 1
-        for i in xrange(N):
-            x, y, dE = self.particle.step(ds/N)
-            if dE/MeV > 0.01:
-                Q = 1
-                if self.show_dose_equivalent:
-                    from physics import quality_factor
-                    Q = quality_factor(dE/(ds/N))
-                self.dE.append((Q*dE/MeV)**2/4) #area->radius
-                self.path.append((x/mm, y/mm))
-            if self.particle.energy <= 0:
-                break
+        pos, dE, dl = self.particle.step(ds)
+        pos  = pos.mean(axis=0)
+        if self.show_dose_equivalent:
+                from physics import quality_factor
+                dE = sum([quality_factor(i/dl)*i for i in dE])
+        else:
+            dE = sum(dE)
+        if dE/MeV > 0.01:    
+            self.dE.append((dE/MeV)**2*self.size/1000) #area->radius
+            self.path.append(pos/mm)
 
         self.scat.set_offsets(self.path)
         self.scat._sizes = self.dE
         self.p_line.set_data([self.particle.pos_x/mm], [self.particle.pos_y/mm])
         self.draw()
-        if self.particle.energy <= 0 or x < 0 or x/mm >WORLD.image.shape[1] or\
-           y < 0 or y/mm > WORLD.image.shape[0]:
+        if self.particle.energy <= 1*eV or\
+           pos[0] < 0 or pos[0]/mm >WORLD.image.shape[1] or\
+           pos[1] < 0 or pos[1]/mm > WORLD.image.shape[0]:
             self.p_line.set_data([], [])
             self.draw()
             self.timer.stop()
@@ -142,13 +141,12 @@ class ApplicationWindow(QtGui.QMainWindow):
         ui_grid.addWidget(self.b_sievert, 4, 1)
 
 
-        ui_grid.addWidget(QtGui.QLabel("Anzahl Ereignisse:"), 5, 0)
-        self.b_shots = QtGui.QSpinBox()
-        self.b_shots.setValue(1)
-        self.b_shots.setMinimum(1)
-        self.b_shots.setMaximum(100)
-        self.b_shots.setEnabled(False)
-        ui_grid.addWidget(self.b_shots, 5, 1)
+        ui_grid.addWidget(QtGui.QLabel("Skalierung Schaden:"), 5, 0)
+        self.b_size = QtGui.QSpinBox()
+        self.b_size.setValue(300)
+        self.b_size.setMinimum(1)
+        self.b_size.setMaximum(1000)
+        ui_grid.addWidget(self.b_size, 5, 1)
 
         btn_start = QtGui.QPushButton("Start")
         btn_start.clicked.connect(self.start_run)
@@ -162,7 +160,7 @@ class ApplicationWindow(QtGui.QMainWindow):
         ui_widget = QtGui.QWidget(self.main_widget)
         ui_widget.setLayout(ui_grid)
 
-        #sc = MyStaticMplCanvas(self.main_widget, width=5, height=4, dpi=100)
+
         self.rad_plot = ParticlePlotCanvas(self.main_widget, width=3,\
                                            height=4, dpi=100)
         l.addWidget(ui_widget)
@@ -201,6 +199,7 @@ Ein Tool zur Visualisierung von Strahlenschäden .
         from physics import MeV, amu, q_e, deg
         from numpy.random import rand
         self.rad_plot.show_dose_equivalent = self.b_sievert.isChecked()
+        self.rad_plot.size = float(self.b_size.text())
         energy = float(self.energy.text())
         if self.sel_dir.currentText() == "Isotrop":
             pos = (rand()*1200*2+800)*mm

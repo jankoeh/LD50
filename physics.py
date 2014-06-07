@@ -41,9 +41,10 @@ def quality_factor(L):
     Quality factor according to wikipedia
     """
     from numpy import sqrt
-    if L < 10*keV/um:
+    L /= (keV/um)
+    if L < 10:
         return 1
-    elif L < 100*keV/um:
+    elif L < 100:
         return 0.32*L-2.2
     else:
         return 300./sqrt(L)
@@ -167,17 +168,21 @@ class Particle(object):
         Make a ds step, return new pos and energy loss
         """
         import numpy as np
-
-        dE = self.energy_loss(ds)
-        if dE > self.energy-10*eV:
-            dE = self.energy
-        self.energy -= dE
-
-        pos_x = self.pos_x
-        pos_y = self.pos_y
-        self.pos_x += np.cos(self.dir)*ds
-        self.pos_y += np.sin(self.dir)*ds
-        return pos_x, pos_y, dE
+        N = ds/(.1*mm)
+        pos = []
+        edep = []
+        for i in xrange(int(N)):
+            if self.energy < 1*eV:
+                break
+            dE = self.energy_loss(ds/N)
+            if dE > self.energy:
+                dE = self.energy
+            self.energy -= dE
+            self.pos_x += np.cos(self.dir)*ds/N
+            self.pos_y += np.sin(self.dir)*ds/N
+            pos.append((self.pos_x, self.pos_y))
+            edep.append(dE)
+        return np.array(pos), np.array(edep), ds/N
 
     def get_velocity(self):
         """Returns the particle velocity"""
