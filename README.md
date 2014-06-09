@@ -10,11 +10,10 @@ This tools aims at visualizing the damage of different radiation types in the hm
 Simplifciations
 ---------------
 at this stage LD50 uses a lot of simplifications.
-
-    * The model is only 2D
-    * The Bethe-Bloch euqation is integrated via Euler method, and with way too large steps
-    * Neutron angular scattring are dummy values
-    * The magnitude of the radiation damage is given by the radius of the circles. This can give the impression that a large area of the Body is affected.
+* The model is only 2D
+* The Bethe-Bloch euqation is integrated via Euler method
+* Neutron angular scattring are dummy values
+* The magnitude of the radiation damage is given by the radius of the circles. This can give the impression that a large area of the Body is affected.
 
 
 License

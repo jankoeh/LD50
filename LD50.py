@@ -30,7 +30,8 @@ class MyMplCanvas(FigureCanvasQTAgg):
     def compute_initial_figure(self):
         pass
 
-
+    def clear_figure(self):
+        pass
 
 
 class ParticlePlotCanvas(MyMplCanvas):
@@ -123,6 +124,7 @@ class ApplicationWindow(QtGui.QMainWindow):
         self.selector.addItem("Elektron")
         self.selector.addItem("Muon")
         self.selector.addItem("Neutron")
+        
         ui_grid.addWidget(self.selector, 0, 1)
         ui_grid.addWidget(QtGui.QLabel("Energie / MeV"), 1, 0)
         self.energy = QtGui.QLineEdit("50")
@@ -130,31 +132,30 @@ class ApplicationWindow(QtGui.QMainWindow):
 
         ui_grid.addWidget(QtGui.QLabel("Einfallsrichtung:"), 2, 0)
         self.sel_dir = QtGui.QComboBox()
-        self.sel_dir.addItems(['Isotrop', 'Strahl'])
+        self.sel_dir.addItems(['Isotrop', 'Strahl', u"Höhenstrahlung"])
         ui_grid.addWidget(self.sel_dir, 2, 1)
 
-        ui_grid.addWidget(QtGui.QLabel("Schaden in:"), 3, 0)
+        ui_grid.addWidget(QtGui.QLabel("Darstellung in:"), 5, 0)
         self.b_gray = QtGui.QRadioButton("Gray (Dosis)")
         self.b_gray.setChecked(True)
         self.b_sievert = QtGui.QRadioButton(u"Sievert (Äquivalentdosis)")
-        ui_grid.addWidget(self.b_gray, 3, 1)
-        ui_grid.addWidget(self.b_sievert, 4, 1)
+        ui_grid.addWidget(self.b_gray, 5, 1)
+        ui_grid.addWidget(self.b_sievert, 6, 1)
 
 
-        ui_grid.addWidget(QtGui.QLabel("Skalierung Schaden:"), 5, 0)
+        ui_grid.addWidget(QtGui.QLabel(u"Größe Darstellung:"), 7, 0)
         self.b_size = QtGui.QSpinBox()
-        self.b_size.setValue(300)
         self.b_size.setMinimum(1)
         self.b_size.setMaximum(1000)
-        ui_grid.addWidget(self.b_size, 5, 1)
+        self.b_size.setValue(300)
+        ui_grid.addWidget(self.b_size, 7, 1)
 
         btn_start = QtGui.QPushButton("Start")
         btn_start.clicked.connect(self.start_run)
         btn_clear = QtGui.QPushButton(u"Zurücksetzen")
         btn_clear.clicked.connect(self.clear)
-        ui_grid.addWidget(btn_start, 6, 0)
-        ui_grid.addWidget(btn_clear, 6, 1)
-
+        ui_grid.addWidget(btn_start, 8, 0)
+        ui_grid.addWidget(btn_clear, 8, 1)
 
 
         ui_widget = QtGui.QWidget(self.main_widget)
@@ -184,6 +185,20 @@ u"""LD50
 Ein Tool zur Visualisierung von Strahlenschäden .
 """
 )
+    def increase_dose(self, dose):
+        """
+        Increase dose on the label
+        """
+        self.lbl_dose.setText( float(self.lbl_dose.text()) + dose)
+
+        
+    def reset_dose_lbl(self):
+        """
+        Resets the dose label to 0
+        """
+        self.lbl_dose.setText('0')
+
+ 
     def start_run(self):
         #for i in xrange(self.b_shots.value()):
         self.rad_plot.timer.stop()
@@ -198,7 +213,7 @@ Ein Tool zur Visualisierung von Strahlenschäden .
         from physics import ChargedParticle, cos_law, mm
         from physics import MeV, amu, q_e, deg
         from numpy.random import rand
-        self.rad_plot.show_dose_equivalent = self.b_sievert.isChecked()
+
         self.rad_plot.size = float(self.b_size.text())
         energy = float(self.energy.text())
         if self.sel_dir.currentText() == "Isotrop":
@@ -219,6 +234,11 @@ Ein Tool zur Visualisierung von Strahlenschäden .
             direction = 0*deg
             pos_x = 0
             pos_y = 550*mm+rand()*100*mm
+        elif self.sel_dir.currentText() == u"Höhenstrahlung":
+            from physics import cos_square
+            direction = cos_square()+270*deg            
+            pos_x = rand()*800*mm
+            pos_y = 1200*mm            
 
         if self.selector.currentText() == "Proton":
             self.rad_plot.particle = ChargedParticle(1*amu, 1*q_e, energy*MeV,
@@ -241,6 +261,8 @@ Ein Tool zur Visualisierung von Strahlenschäden .
             from physics import Neutron
             self.rad_plot.particle = Neutron(amu, 0, energy*MeV,
                                         [pos_x, pos_y], direction)
+            self.b_gray.setChecked(False)
+        self.rad_plot.show_dose_equivalent = self.b_sievert.isChecked()
 
 qApp = QtGui.QApplication(sys.argv)
 aw = ApplicationWindow()

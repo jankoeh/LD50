@@ -65,6 +65,22 @@ def cos_law():
         theta *= -1
     return theta
 
+def cos_square():
+    """
+    Returns a cosine law angle.
+    Used to generate an isotropic distribution
+    """
+    from numpy.random import rand
+    from numpy import cos
+    while True:
+        theta = 0.5*rand()*pi
+        y = rand()
+        if y < cos(theta)*cos(theta):
+            break
+    if rand() > .5:
+        theta *= -1
+    return theta
+
 class Material(object):
     def __init__(self, Z, A, rho):
         self.Z = Z
@@ -102,9 +118,9 @@ class Water(Material):
             self.xsec_O = interp1d(energy_O*eV, sigma_O*barn)
             self.n_dens_H = 2*33.3679e27/m3
             self.n_dens_O = 33.3679e27/m3
-    def get_I(self):
+    def get_mean_ex_pot(self):
         return 75*q_e
-    def get_n(self):
+    def get_e_density(self):
         return 3.3456e29/m3
     def get_neutron_mfp(self, energy):
         """
@@ -137,7 +153,7 @@ class Volume(object):
         means excitation potential and the electron density
         """
         if self.is_inside(pos_x, pos_y):
-            return self.material.get_I(), self.material.get_n()
+            return self.material.get_mean_ex_pot(), self.material.get_e_density()
         else:
             return 1e-30, 0
     def get_neutron_mfp(self, pos_x, pos_y, energy):
