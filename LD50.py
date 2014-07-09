@@ -71,10 +71,9 @@ class ParticlePlotCanvas(MyMplCanvas):
                 dE = sum([quality_factor(i/dl)*i for i in dE])
         else:
             dE = sum(dE)
-        if dE/MeV > 0.01:    
-            self.dE.append((dE/MeV)**2*self.size/1000) #area->radius
+        if dE/MeV > 0.001:    
+            self.dE.append((dE/MeV*self.size)**2/1000.) #area->radius
             self.path.append(pos/mm)
-
         self.scat.set_offsets(self.path)
         self.scat._sizes = self.dE
         self.p_line.set_data([self.particle.pos_x/mm], [self.particle.pos_y/mm])
@@ -124,6 +123,7 @@ class ApplicationWindow(QtGui.QMainWindow):
         self.selector.addItem("Elektron")
         self.selector.addItem("Muon")
         self.selector.addItem("Neutron")
+        self.selector.addItem("Gamma/X-Ray")
         
         ui_grid.addWidget(self.selector, 0, 1)
         ui_grid.addWidget(QtGui.QLabel("Energie / MeV"), 1, 0)
@@ -147,7 +147,7 @@ class ApplicationWindow(QtGui.QMainWindow):
         self.b_size = QtGui.QSpinBox()
         self.b_size.setMinimum(1)
         self.b_size.setMaximum(1000)
-        self.b_size.setValue(300)
+        self.b_size.setValue(15)
         ui_grid.addWidget(self.b_size, 7, 1)
 
         btn_start = QtGui.QPushButton("Start")
@@ -260,6 +260,11 @@ Ein Tool zur Visualisierung von Strahlenschäden .
         elif self.selector.currentText() == "Neutron":
             from physics import Neutron
             self.rad_plot.particle = Neutron(amu, 0, energy*MeV,
+                                        [pos_x, pos_y], direction)
+            self.b_gray.setChecked(False)
+        elif self.selector.currentText() == "Gamma/X-Ray":
+            from physics import Gamma
+            self.rad_plot.particle = Gamma(amu, 0, energy*MeV,
                                         [pos_x, pos_y], direction)
             self.b_gray.setChecked(False)
         self.rad_plot.show_dose_equivalent = self.b_sievert.isChecked()

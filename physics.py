@@ -22,6 +22,7 @@ cm = 1e-2
 m = 1
 km = 1e3
 
+cm2 = 1e-4
 cm3 = 1e-6
 m3 = 1
 
@@ -99,6 +100,9 @@ class Material(object):
     def get_neutron_mfp(self, energy):
         """Neutron mean free path length"""
         return 1e30*m
+    def get_gamma_mfp(self, energy):
+        """Neutron mean free path length"""
+        return 1e30*m
 
 class Water(Material):
     def __init__(self, load_x_sections=True):
@@ -114,10 +118,15 @@ class Water(Material):
                                usecols=[0,2,4], skiprows=2).ravel()
             sigma_O = loadtxt("n_x_section_O.txt", 
                               usecols=[1,3,5], skiprows=2).ravel()
-            self.xsec_H = interp1d(energy_H*eV, sigma_H*barn)
-            self.xsec_O = interp1d(energy_O*eV, sigma_O*barn)
+            self.n_xsec_H = interp1d(energy_H*eV, sigma_H*barn)
+            self.n_xsec_O = interp1d(energy_O*eV, sigma_O*barn)
             self.n_dens_H = 2*33.3679e27/m3
             self.n_dens_O = 33.3679e27/m3
+            g_energy, attenuation = loadtxt('g_x_section_H20.txt', skiprows=9,
+                                            usecols=[0, 7], unpack=True)
+            self.g_attn = interp1d(g_energy*MeV, attenuation*cm2/g)
+                                            
+                    
     def get_mean_ex_pot(self):
         return 75*q_e
     def get_e_density(self):
@@ -126,9 +135,15 @@ class Water(Material):
         """
         returns mfp for H and O
         """
-        return [1./(self.n_dens_H*self.xsec_H(energy)),
-               1./(self.n_dens_O*self.xsec_O(energy))]
+        return [1./(self.n_dens_H*self.n_xsec_H(energy)),
+               1./(self.n_dens_O*self.n_xsec_O(energy))]
 
+    def get_gamma_mfp(self, energy):
+        """
+        Returns mfp for gammas in H2O
+        """        
+        return [1./(self.g_attn(energy)*1*g/cm3)]
+        
 class Volume(object):
     def __init__(self, fn_image, s2px=1e3,\
                  material=Material(8., 16., 1.*g/cm3)):
@@ -164,6 +179,14 @@ class Volume(object):
             return self.material.get_neutron_mfp(energy)
         else:
             return []
+    def get_gamma_mfp(self, pos_x, pos_y, energy):
+        """
+        Returns the mean free path for neutrons
+        """
+        if self.is_inside(pos_x, pos_y):            
+            return self.material.get_gamma_mfp(energy)
+        else:
+            return []        
 
 WORLD = Volume('torso2.png', material=Water())
 
@@ -237,6 +260,25 @@ class Neutron(Particle):
         for mfp in WORLD.get_neutron_mfp(self.pos_x, self.pos_y, self.energy):
             if ds/mfp> rand():
                 dE += min((20*MeV, self.energy*rand()))
+            if dE > 10*keV:
+                self.dir += rand()*40*deg-20*deg
+        return dE
+
+class Gamma(Particle):
+    def energy_loss(self, ds):
+        """
+        scattering and photo ion
+        Simple 'model' which takes the overall mfp and sets every edep below
+        0.1MeV as photo ionization.
+        """
+        from numpy.random import rand
+        dE = 0
+        for mfp in WORLD.get_gamma_mfp(self.pos_x, self.pos_y, self.energy):
+            if ds/mfp> rand(): #Crappy way to 'simulate' photo ionization 
+                if self.energy < 0.1*MeV:
+                    dE += self.energy
+                else:
+                    dE +=  min((20*MeV, self.energy*rand()/2))
             if dE > 10*keV:
                 self.dir += rand()*40*deg-20*deg
         return dE
