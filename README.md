@@ -5,17 +5,18 @@ A simple tool to visualize radiation damage in humans. - Toying around with pyQt
 
 Purpose
 -------
-This tools aims at visualizing the damage of different radiation types in the human body. It is by no means a way o reliably calculate a radiation hazard.
+This tools aims at visualizing the damage of different radiation types in the human body. It is by no means a way to reliably calculate a radiation hazard.
 
 
 Install
 -------
 LD50 is written in Python 2.7 and makes use of numpy and matplotlib library.
 To get a complete and ready-to-use python setup, you can download https://code.google.com/p/pythonxy/
+
 If you don't want to download/install the whole phythonxy package, you have to download/install 
-https://www.python.org/download/releases/2.7.8/
-http://www.scipy.org/scipylib/download.html
-http://matplotlib.org/downloads.html
+* https://www.python.org/download/releases/2.7.8/
+* http://www.scipy.org/scipylib/download.html
+* http://matplotlib.org/downloads.html
 
 To Start the LD50, just execute LD50.py
 

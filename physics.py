@@ -110,19 +110,19 @@ class Water(Material):
         if load_x_sections:
             from numpy import loadtxt
             from scipy.interpolate import interp1d
-            energy_H = loadtxt("n_x_section_H.txt", 
+            energy_H = loadtxt("n_X_section_H.txt", 
                                usecols=[0,2,4],skiprows=2).ravel()
-            sigma_H = loadtxt("n_x_section_H.txt", 
+            sigma_H = loadtxt("n_X_section_H.txt", 
                               usecols=[1,3,5], skiprows=2).ravel()
-            energy_O = loadtxt("n_x_section_O.txt",
+            energy_O = loadtxt("n_X_section_O.txt",
                                usecols=[0,2,4], skiprows=2).ravel()
-            sigma_O = loadtxt("n_x_section_O.txt", 
+            sigma_O = loadtxt("n_X_section_O.txt", 
                               usecols=[1,3,5], skiprows=2).ravel()
             self.n_xsec_H = interp1d(energy_H*eV, sigma_H*barn)
             self.n_xsec_O = interp1d(energy_O*eV, sigma_O*barn)
             self.n_dens_H = 2*33.3679e27/m3
             self.n_dens_O = 33.3679e27/m3
-            g_energy, attenuation = loadtxt('g_x_section_H20.txt', skiprows=9,
+            g_energy, attenuation = loadtxt('g_X_section_H20.txt', skiprows=9,
                                             usecols=[0, 7], unpack=True)
             self.g_attn = interp1d(g_energy*MeV, attenuation*cm2/g)
                                             
