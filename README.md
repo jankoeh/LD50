@@ -7,6 +7,13 @@ Purpose
 -------
 This tools aims at visualizing the damage of different radiation types in the hman body. It is by no means a way o reliably calculate a radiation hazard.
 
+
+Install
+-------
+LD50 is writen in Python 2.7 and makes use of numpy and matplotlib library.
+To get a complete and ready-to-use python setup, you can download https://code.google.com/p/pythonxy/
+
+
 Simplifciations
 ---------------
 at this stage LD50 uses a lot of simplifications.
