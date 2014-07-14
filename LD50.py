@@ -55,7 +55,7 @@ class ParticlePlotCanvas(MyMplCanvas):
     def compute_initial_figure(self):
         from matplotlib.pyplot import imread
         from physics import WORLD
-        image = imread("torso2.png")
+        image = imread("gfx/torso2.png")
         self.axes.imshow(image, extent=(0, WORLD.image.shape[1],\
                                         0, WORLD.image.shape[0]))
         self.p_line = self.axes.plot([], [], 'bo')[0]

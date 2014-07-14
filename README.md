@@ -28,7 +28,7 @@ at this stage LD50 uses a lot of simplifications.
 * The Bethe-Bloch equation is integrated via Euler method
 * Neutron angular scattering are dummy values
 * The magnitude of the radiation damage is given by the radius of the circles. This can give the impression that a large area of the Body is affected.
-
+* The Torso is located in Vacuum, not in air. I.e. energy loss of particles in air is neglected.
 
 License
 -------
