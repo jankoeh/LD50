@@ -38,15 +38,15 @@ class ParticlePlotCanvas(MyMplCanvas):
     """
     """
     def __init__(self, *args, **kwargs):
-        from physics import ChargedParticle, MeV, cm, amu, q_e, deg, WORLD
-        self.particle = ChargedParticle(1*amu, 1*q_e, 150*MeV,
-                                               [0, 60*cm], 0*deg)
+        from setup import WORLD
+        self.particle = None # particle Class object
         self.path = []
         self.dE = []
         self.show_dose_equivalent = False
         MyMplCanvas.__init__(self, *args, **kwargs)
-        self.axes.set_xlim(0, WORLD.image.shape[1])
-        self.axes.set_ylim(0, WORLD.image.shape[0])
+        x0, y0, x1, y1 = WORLD.get_bbox()
+        self.axes.set_xlim(x0, x1)
+        self.axes.set_ylim(y0, y1)
         self.timer = QtCore.QTimer(self)
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), \
                                self.update_figure)
@@ -54,15 +54,17 @@ class ParticlePlotCanvas(MyMplCanvas):
 
     def compute_initial_figure(self):
         from matplotlib.pyplot import imread
-        from physics import WORLD
-        image = imread("gfx/torso2.png")
-        self.axes.imshow(image, extent=(0, WORLD.image.shape[1],\
-                                        0, WORLD.image.shape[0]))
+        from setup import WORLD
+        for fn_image, bbox in WORLD.get_image_info():
+            image = imread(fn_image)
+            x0, y0, x1, y1 = bbox
+            self.axes.imshow(image, extent=(x0, x1, y0, y1))
         self.p_line = self.axes.plot([], [], 'bo')[0]
         self.scat = self.axes.scatter([], [], s=[], c='red',
                                       alpha=0.4, linewidth=0)
     def update_figure(self):
-        from physics import MeV, eV, mm, WORLD
+        from setup import WORLD
+        from physics import MeV, eV, mm
         ds = 10*mm
         pos, dE, dl = self.particle.step(ds)
         pos  = pos.mean(axis=0)
@@ -73,14 +75,13 @@ class ParticlePlotCanvas(MyMplCanvas):
             dE = sum(dE)
         if dE/MeV > 0.001:    
             self.dE.append((dE/MeV*self.size)**2/1000.) #area->radius
-            self.path.append(pos/mm)
+            self.path.append(pos)
         self.scat.set_offsets(self.path)
         self.scat._sizes = self.dE
-        self.p_line.set_data([self.particle.pos_x/mm], [self.particle.pos_y/mm])
+        self.p_line.set_data([self.particle.pos_x], [self.particle.pos_y])
         self.draw()
-        if self.particle.energy <= 1*eV or\
-           pos[0] < 0 or pos[0]/mm >WORLD.image.shape[1] or\
-           pos[1] < 0 or pos[1]/mm > WORLD.image.shape[0]:
+        if self.particle.energy <= 1*eV or \
+            not WORLD.is_in_bbox(self.particle.pos_x, self.particle.pos_y):
             self.p_line.set_data([], [])
             self.draw()
             self.timer.stop()
@@ -210,35 +211,36 @@ Ein Tool zur Visualisierung von Strahlenschäden .
         self.rad_plot.clear_figure()
 
     def particle_generator(self):
-        from physics import ChargedParticle, cos_law, mm
-        from physics import MeV, amu, q_e, deg
+        from physics import ChargedParticle, cos_law, MeV, amu, q_e, deg
+        from setup import WORLD
         from numpy.random import rand
 
         self.rad_plot.size = float(self.b_size.text())
         energy = float(self.energy.text())
+        x0, y0, x1, y1 = WORLD.get_bbox()
         if self.sel_dir.currentText() == "Isotrop":
-            pos = (rand()*1200*2+800)*mm
-            if pos < 1200*mm:
+            pos = rand()*((x1-x0)+2*(y1-y0))
+            if pos < y1-y0:
                 direction = cos_law()
-                pos_x = 0
+                pos_x = x0
                 pos_y = pos
-            elif pos < (1200+800)*mm:
+            elif pos < y1-y0 + x1-x0:
                 direction = cos_law() + 270*deg
-                pos_x = pos-1200*mm
-                pos_y = 1200*mm
+                pos_x = pos-(y1-y0)
+                pos_y = y1
             else:
                 direction = cos_law() + 180*deg
-                pos_x = 800*mm
-                pos_y = pos -2000*mm
+                pos_x = x1
+                pos_y = pos - (y1-y0 + x1-x0)
         elif self.sel_dir.currentText() == "Strahl":
             direction = 0*deg
-            pos_x = 0
-            pos_y = 550*mm+rand()*100*mm
+            pos_x = x0
+            pos_y = y0+rand()*(y1-y0)
         elif self.sel_dir.currentText() == u"Höhenstrahlung":
             from physics import cos_square
             direction = cos_square()+270*deg            
-            pos_x = rand()*800*mm
-            pos_y = 1200*mm            
+            pos_x = x0+rand()*(x1-x0)
+            pos_y = y1            
 
         if self.selector.currentText() == "Proton":
             self.rad_plot.particle = ChargedParticle(1*amu, 1*q_e, energy*MeV,

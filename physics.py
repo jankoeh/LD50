@@ -82,74 +82,14 @@ def cos_square():
         theta *= -1
     return theta
 
-class Material(object):
-    def __init__(self, Z, A, rho):
-        self.Z = Z
-        self.A = A
-        self.rho = rho
-    def get_mean_ex_pot(self):
-        """
-        returns the means excitation potential
-        """
-        return 10 * q_e * self.Z
-    def get_e_density(self):
-        """
-        returns the material specific electron density
-        """
-        return self.Z*self.rho/self.A/amu
-    def get_neutron_mfp(self, energy):
-        """Neutron mean free path length"""
-        return 1e30*m
-    def get_gamma_mfp(self, energy):
-        """Neutron mean free path length"""
-        return 1e30*m
 
-class Water(Material):
-    def __init__(self, load_x_sections=True):
-        super(Water, self).__init__(8., 16., 1.*g/cm3)      
-        if load_x_sections:
-            from numpy import loadtxt
-            from scipy.interpolate import interp1d
-            energy_H = loadtxt("X-sections/n_X_section_H.txt", 
-                               usecols=[0,2,4],skiprows=2).ravel()
-            sigma_H = loadtxt("X-sections/n_X_section_H.txt", 
-                              usecols=[1,3,5], skiprows=2).ravel()
-            energy_O = loadtxt("X-sections/n_X_section_O.txt",
-                               usecols=[0,2,4], skiprows=2).ravel()
-            sigma_O = loadtxt("X-sections/n_X_section_O.txt", 
-                              usecols=[1,3,5], skiprows=2).ravel()
-            self.n_xsec_H = interp1d(energy_H*eV, sigma_H*barn)
-            self.n_xsec_O = interp1d(energy_O*eV, sigma_O*barn)
-            self.n_dens_H = 2*33.3679e27/m3
-            self.n_dens_O = 33.3679e27/m3
-            g_energy, attenuation = loadtxt('X-sections/g_X_section_H20.txt', 
-                                            skiprows=9,
-                                            usecols=[0, 7], unpack=True)
-            self.g_attn = interp1d(g_energy*MeV, attenuation*cm2/g)
-                                            
-                    
-    def get_mean_ex_pot(self):
-        return 75*q_e
-    def get_e_density(self):
-        return 3.3456e29/m3
-    def get_neutron_mfp(self, energy):
-        """
-        returns mfp for H and O
-        """
-        return [1./(self.n_dens_H*self.n_xsec_H(energy)),
-               1./(self.n_dens_O*self.n_xsec_O(energy))]
-
-    def get_gamma_mfp(self, energy):
-        """
-        Returns mfp for gammas in H2O
-        """        
-        return [1./(self.g_attn(energy)*1*g/cm3)]
         
 class Volume(object):
-    def __init__(self, fn_image, s2px=1e3,\
-                 material=Material(8., 16., 1.*g/cm3)):
+    def __init__(self, fn_image, name, material, s2px=1e3,):
         from scipy.misc import imread
+        self.fn_image = fn_image
         self.image = imread(fn_image)
+        self.name = name
         self.s2px = s2px
         self.material = material
     def is_inside(self, pos_x, pos_y):
@@ -187,9 +127,127 @@ class Volume(object):
         if self.is_inside(pos_x, pos_y):            
             return self.material.get_gamma_mfp(energy)
         else:
-            return []        
+            return []
+    def get_bbox(self):
+        import numpy
+        return numpy.array([0, #x0
+                            0, #y0
+                            self.image.shape[1]/self.s2px,  #x1
+                            self.image.shape[0]/self.s2px]) #y1
+    def is_in_bbox(self, pos_x, pos_y):
+        x0, y0, x1, y1 = self.get_bbox()        
+        if (x0 <= pos_x <= x1) and (y0 <= pos_y <= y1):
+            return True
+        else:
+            return False
+            
+    def get_image_info(self):
+        """
+        Returns a list of [[image fn, scaling factor, offset]]
+        """
+        return [[self.fn_image, self.get_bbox()]]
 
-WORLD = Volume('gfx/torso2.png', material=Water())
+
+class MotherVolume(Volume):
+    """
+    Manages a list of volumes.
+    
+    Args:
+    -----
+    volumes : list
+        list of Volume class objects (default=[])
+    offsets : list
+        list of (x,y) position offset of the corresponding volumes (default=[])
+    
+    If there are overlaps between different volumes, the last volume in the 
+    list is used.
+    
+    Note:
+    -----
+    MotherVolumes can contain MotherVolumes
+    """
+    def __init__(self, volumes=[], offsets=[]):
+        import numpy
+        self.volumes = volumes
+        self.offsets = numpy.array(offsets)
+    def add_volume(self, volume, offset=(0,0)):
+        """
+        Add another voume, offset pair to the mothervolume
+        """
+        self.volumes.append(volume)
+        self.offsets.append(offset)
+    def get_volume(self, pos_x, pos_y):
+        for i in xrange(1, len(self.volumes)+1):
+            x0, y0 = self.offsets[-i]
+            if self.volumes[-i].is_inside(pos_x, pos_y):
+                return self.volumes[-i]
+        return None
+    def is_inside(self, pos_x, pos_y):
+        for i in xrange(1, len(self.volumes)+1):
+            x0, y0 = self.offsets[-i]
+            if self.volumes[-i].is_inside(pos_x, pos_y):
+                return True
+        return False
+    def get_mexpot_edens(self, pos_x, pos_y):
+        """
+        Returns a tuple o the
+        means excitation potential and the electron density
+        """
+        volume = self.get_volume(pos_x, pos_y)
+        if volume:
+            return volume.get_mexpot_edens(pos_x, pos_y)
+        return 1e-30, 0
+
+    def get_neutron_mfp(self, pos_x, pos_y, energy):
+        """
+        Returns the mean free path for neutrons
+        """
+        volume = self.get_volume(pos_x, pos_y)
+        if volume:            
+            return self.material.get_neutron_mfp(energy)
+        else:
+            return []
+    def get_gamma_mfp(self, pos_x, pos_y, energy):
+        """
+        Returns the mean free path for neutrons
+        """
+        volume = self.get_volume(pos_x, pos_y)
+        if volume:            
+            return self.material.get_gamma_mfp(energy)
+        else:
+            return []
+
+    def get_image_info(self):
+        """
+        Returns a list of [image fn, bbox] for each volume
+        """
+        im_info = []
+        for i in xrange(len(self.volumes)):
+            for info in self.volumes[i].get_image_info():
+                info[1][0] += self.offsets[i][0]
+                info[1][1] += self.offsets[i][1]
+                info[1][2] += self.offsets[i][0]
+                info[1][3] += self.offsets[i][1]
+                im_info.append(info)
+        return im_info
+
+    def get_bbox(self):
+        """
+        Returns the smallest bbox containing all volumes
+        """
+        from numpy import array
+        bboxes = []
+        for i in xrange(len(self.volumes)):
+            bbox = self.volumes[i].get_bbox()
+            bbox[0] += self.offsets[i][0]
+            bbox[1] += self.offsets[i][1]
+            bbox[2] += self.offsets[i][0]
+            bbox[3] += self.offsets[i][1]
+            bboxes.append(bbox)
+        bboxes = array(bboxes)
+        return array([bboxes[:,0].min(), bboxes[:,1].min(),  #x0, y0
+                      bboxes[:,2].max(), bboxes[:,3].max()]) #x1, y1
+                
 
 class Particle(object):
     def __init__(self, mass, charge, energy, pos, direction):
@@ -243,6 +301,7 @@ class ChargedParticle(Particle):
         Beethe Bloch
         """
         from numpy import log
+        from setup import WORLD
         mexpot, edens = WORLD.get_mexpot_edens(self.pos_x, self.pos_y)
         v = self.get_velocity()
         z = self.charge/q_e
@@ -257,6 +316,7 @@ class Neutron(Particle):
         straggeling
         """
         from numpy.random import rand
+        from setup import WORLD
         dE = 0
         for mfp in WORLD.get_neutron_mfp(self.pos_x, self.pos_y, self.energy):
             if ds/mfp> rand():
@@ -273,6 +333,7 @@ class Gamma(Particle):
         0.1MeV as photo ionization.
         """
         from numpy.random import rand
+        from setup import WORLD
         dE = 0
         for mfp in WORLD.get_gamma_mfp(self.pos_x, self.pos_y, self.energy):
             if ds/mfp> rand(): #Crappy way to 'simulate' photo ionization 
