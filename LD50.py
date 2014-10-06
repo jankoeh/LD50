@@ -44,7 +44,7 @@ class ParticlePlotCanvas(MyMplCanvas):
         self.dE = []
         self.show_dose_equivalent = False
         MyMplCanvas.__init__(self, *args, **kwargs)
-        x0, y0, x1, y1 = WORLD.get_bbox()
+        x0, y0, x1, y1 = WORLD.bbox
         self.axes.set_xlim(x0, x1)
         self.axes.set_ylim(y0, y1)
         self.timer = QtCore.QTimer(self)
@@ -64,8 +64,8 @@ class ParticlePlotCanvas(MyMplCanvas):
                                       alpha=0.4, linewidth=0)
     def update_figure(self):
         from setup import WORLD
-        from physics import MeV, eV, mm
-        ds = 10*mm
+        from physics import MeV, eV
+        ds = (WORLD.bbox[2]-WORLD.bbox[0])/100
         pos, dE, dl = self.particle.step(ds)
         pos  = pos.mean(axis=0)
         if self.show_dose_equivalent:
@@ -217,7 +217,7 @@ Ein Tool zur Visualisierung von Strahlenschäden .
 
         self.rad_plot.size = float(self.b_size.text())
         energy = float(self.energy.text())
-        x0, y0, x1, y1 = WORLD.get_bbox()
+        x0, y0, x1, y1 = WORLD.bbox
         if self.sel_dir.currentText() == "Isotrop":
             pos = rand()*((x1-x0)+2*(y1-y0))
             if pos < y1-y0:

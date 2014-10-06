@@ -26,18 +26,27 @@ Simplifications
 at this stage LD50 uses a lot of simplifications.
 * The model is only 2D
 * The Bethe-Bloch equation is integrated via Euler method
-* Neutron angular scattering are dummy values
+* Neutron/gamma angular scattering are dummy values
 * The magnitude of the radiation damage is given by the radius of the circles. This can give the impression that a large area of the Body is affected.
 * The Torso is located in Vacuum, not in air. I.e. energy loss of particles in air is neglected.
+
 
 License
 -------
 This tool is free to use and can be freely modified and distributed. I'm grateful for any contribution to this project.
     
 
+Roadmap
+-------
+* Add additional materials
+* Introduce shielding option
+* Detector example
+* Port matplotlib gfx to OpenGL
+
+
 Contact
 -------
 
-Jan Köhler
+Jan KÃ¶hler
 
 jan.koeh@gmail.com

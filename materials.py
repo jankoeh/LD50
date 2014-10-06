@@ -69,3 +69,32 @@ class Water(Material):
         Returns mfp for gammas in H2O
         """        
         return [1./(self.g_attn(energy)*1*g/cm3)]
+        
+class Silicon(Material):
+    def __init__(self, load_x_sections=True):
+        from physics import barn, N_A
+        super(Silicon, self).__init__(14., 28., 2.336*g/cm3)
+        if load_x_sections:
+            from numpy import loadtxt
+            from scipy.interpolate import interp1d
+            energy = loadtxt("X-sections/n_X_section_H.txt", 
+                               usecols=[0,2,4],skiprows=2).ravel()
+            sigma= loadtxt("X-sections/n_X_section_H.txt", 
+                              usecols=[1,3,5], skiprows=2).ravel()
+            self.n_xsec = interp1d(energy*eV, sigma*barn)
+            self.nr_dens = 1./(12.06e-6*m3/N_A)
+            g_energy, attenuation = loadtxt('X-sections/g_X_section_Si.txt', 
+                                            usecols=[0, 2], unpack=True)
+            self.g_attn = interp1d(g_energy*MeV, attenuation*cm2/g)
+    def get_neutron_mfp(self, energy):
+        """
+        returns mfp for H and O
+        """
+        return [1./(self.n_dens*self.n_xsec(energy))]
+
+    def get_gamma_mfp(self, energy):
+        """
+        Returns mfp for gammas in H2O
+        """        
+        return [1./(self.g_attn(energy)*1*g/cm3)]            
+            

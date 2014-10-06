@@ -11,7 +11,8 @@ from scipy.constants import \
     pi, \
     m_e, \
     c as c_light,\
-    epsilon_0
+    epsilon_0,\
+    N_A
 from scipy.constants import physical_constants
 m_muon = physical_constants['muon mass'][0]
 
@@ -92,6 +93,7 @@ class Volume(object):
         self.name = name
         self.s2px = s2px
         self.material = material
+        self._set_bbox()
     def is_inside(self, pos_x, pos_y):
         """ """
         pos_x = int(pos_x*self.s2px)
@@ -128,14 +130,13 @@ class Volume(object):
             return self.material.get_gamma_mfp(energy)
         else:
             return []
-    def get_bbox(self):
-        import numpy
-        return numpy.array([0, #x0
-                            0, #y0
-                            self.image.shape[1]/self.s2px,  #x1
-                            self.image.shape[0]/self.s2px]) #y1
+    def _set_bbox(self):
+        self.bbox =  (0, #x0
+                      0, #y0
+                      self.image.shape[1]/self.s2px,  #x1
+                      self.image.shape[0]/self.s2px) #y1
     def is_in_bbox(self, pos_x, pos_y):
-        x0, y0, x1, y1 = self.get_bbox()        
+        x0, y0, x1, y1 = self.bbox
         if (x0 <= pos_x <= x1) and (y0 <= pos_y <= y1):
             return True
         else:
@@ -145,7 +146,7 @@ class Volume(object):
         """
         Returns a list of [[image fn, scaling factor, offset]]
         """
-        return [[self.fn_image, self.get_bbox()]]
+        return [[self.fn_image, self.bbox]]
 
 
 class MotherVolume(Volume):
@@ -170,12 +171,14 @@ class MotherVolume(Volume):
         import numpy
         self.volumes = volumes
         self.offsets = numpy.array(offsets)
+        self._set_bbox()
     def add_volume(self, volume, offset=(0,0)):
         """
         Add another voume, offset pair to the mothervolume
         """
         self.volumes.append(volume)
         self.offsets.append(offset)
+        self._set_bbox()
     def get_volume(self, pos_x, pos_y):
         for i in xrange(1, len(self.volumes)+1):
             x0, y0 = self.offsets[-i]
@@ -223,30 +226,25 @@ class MotherVolume(Volume):
         """
         im_info = []
         for i in xrange(len(self.volumes)):
-            for info in self.volumes[i].get_image_info():
-                info[1][0] += self.offsets[i][0]
-                info[1][1] += self.offsets[i][1]
-                info[1][2] += self.offsets[i][0]
-                info[1][3] += self.offsets[i][1]
-                im_info.append(info)
+            for fn, bbox in self.volumes[i].get_image_info():
+                x0, y0, x1, y1 = bbox
+                dx, dy = self.offsets[i]
+                im_info.append([fn, (x0+dx, y0+dy, x1+dx, y1+dy)])
         return im_info
 
-    def get_bbox(self):
+    def _set_bbox(self):
         """
         Returns the smallest bbox containing all volumes
         """
         from numpy import array
         bboxes = []
         for i in xrange(len(self.volumes)):
-            bbox = self.volumes[i].get_bbox()
-            bbox[0] += self.offsets[i][0]
-            bbox[1] += self.offsets[i][1]
-            bbox[2] += self.offsets[i][0]
-            bbox[3] += self.offsets[i][1]
-            bboxes.append(bbox)
+            x0, y0, x1, y1 = self.volumes[i].bbox
+            dx, dy = self.offsets[i]
+            bboxes.append((x0+dx, y0+dy, x1+dx, y1+dy))
         bboxes = array(bboxes)
-        return array([bboxes[:,0].min(), bboxes[:,1].min(),  #x0, y0
-                      bboxes[:,2].max(), bboxes[:,3].max()]) #x1, y1
+        self.bbox = (bboxes[:,0].min(), bboxes[:,1].min(),  #x0, y0
+                     bboxes[:,2].max(), bboxes[:,3].max()) #x1, y1
                 
 
 class Particle(object):

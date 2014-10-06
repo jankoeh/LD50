@@ -1,0 +1,8 @@
+X-section files have been obtained from:
+
+http://www.nndc.bnl.gov/exfor/endf00.jsp
+http://www.nndc.bnl.gov/sigma/index.jsp <- source for neutrons
+
+gamma
+http://www.nist.gov/pml/data/xraycoef/index.cfm
+http://physics.nist.gov/PhysRefData/Xcom/html/xcom1.html <-source for gamma
