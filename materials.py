@@ -13,8 +13,8 @@ class Material(object):
         self.A = A
         self.rho = rho
         self.nr_dens = self.rho/(amu*self.A)
-        self.n_xsec = None
-        self.g_attn = None
+        self.n_xsec = lambda x : 1e-30
+        self.g_attn = lambda x : 1e-30
         if n_x_sections:
             from numpy import loadtxt
             from scipy.interpolate import interp1d
@@ -39,20 +39,55 @@ class Material(object):
         """
         MFP for neutrons
         """
-        if self.n_xsec:
-            return [1./(self.n_dens*self.n_xsec(energy))]
-        else:
-            return [1e30]
+        return [1./(self.nr_dens*self.n_xsec(energy))]
+
 
     def get_gamma_mfp(self, energy):
         """
         MFP for gammas
         """
-        if self.g_attn:
-            return [1./(self.g_attn(energy)*1*g/cm3)]
-        else:
-            return [1e30]
+        return [1./(self.g_attn(energy)*self.rho)]
 
+class Compound(Material):
+    """
+    A compound of Materials
+    The composition is handled by giving a list of multiple materials
+
+    Args:
+    -----
+    materials : list
+        A list of materials
+    rho : float
+        The density of the compound
+        
+    Example:
+    --------
+    > Water = Compound([Hydrogen, Hydrogen, Oxygen])
+    
+    """
+    def __init__(self, materials, rho):
+        self.materials = materials
+        self.rho = rho
+        from numpy import mean
+        #these average values are used for and mean_ex_pot e_density
+        #especially the latter one needs to be reviewed TODO
+        self.Z = mean([material.Z for material in materials])
+        self.A = mean([material.A for material in materials])
+        self.sumA = sum([material.A for material in materials])
+        self.nr_dens = self.rho/(amu*self.sumA)
+    def get_neutron_mfp(self, energy):
+        """
+        MFP for neutrons
+        """
+        return [1./(self.nr_dens*material.n_xsec(energy)) for material in self.materials]
+
+
+    def get_gamma_mfp(self, energy):
+        """
+        MFP for gammas
+        """
+        return [1./(material.g_attn(energy)*self.rho*material.A/self.sumA) for material in self.materials]
+  
 
 class Water(Material):
     def __init__(self, load_x_sections=True):
@@ -133,7 +168,7 @@ class CesiumIodide(Material):
         """
         Returns mfp for gammas in H2O
         """        
-        return [1./(self.g_attn(energy)*1*g/cm3)]    
+        return [1./(self.g_attn(energy)*self.rho)]    
 
         
             
