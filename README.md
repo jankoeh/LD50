@@ -1,12 +1,16 @@
 LD50
 ====
 
-A simple tool to visualize radiation damage in humans. - Toying around with pyQt and matplotlib
+A simple tool to visualize radiation damage in humans. - Toying around with pyQt and matplotlib.
 
 Purpose
 -------
-This tools aims at visualizing the damage of different radiation types in the human body. It is by no means a way to reliably calculate a radiation hazard.
+This tools aims at visualizing the damage of different radiation types in the human body (or matter in general). It is by no means a way to reliably calculate a radiation hazard.
 
+Updates
+-------
+Added the geonetry of the Radiation Assessment Detctor (RAD) (see http://mslrad.boulder.swri.edu/). The simulation setup can be defined in `setup.py`.
+Set a human body via `WORLD = HUMAN`, set RAD via `WORLD = RAD`.
 
 Install
 -------

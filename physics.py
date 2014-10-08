@@ -73,11 +73,11 @@ def cos_square():
     Used to generate an isotropic distribution
     """
     from numpy.random import rand
-    from numpy import cos
+    from numpy import sin, cos
     while True:
         theta = 0.5*rand()*pi
         y = rand()
-        if y < cos(theta)*cos(theta):
+        if y < cos(theta)**2*sin(theta):
             break
     if rand() > .5:
         theta *= -1
@@ -86,7 +86,7 @@ def cos_square():
 
         
 class Volume(object):
-    def __init__(self, fn_image, name, material, s2px=1e3,):
+    def __init__(self, fn_image, name, material, s2px=1e3):
         from scipy.misc import imread
         self.fn_image = fn_image
         self.image = imread(fn_image)
@@ -101,7 +101,7 @@ class Volume(object):
         if self.image.shape[0]<=pos_y or pos_y<0 or \
            self.image.shape[1]<=pos_x or pos_x<0:
             return False
-        if self.image[-pos_y][pos_x][0]>0:
+        if self.image[-pos_y][pos_x][3]>0:
             return True
         else:
             return False
@@ -159,6 +159,7 @@ class MotherVolume(Volume):
         list of Volume class objects (default=[])
     offsets : list
         list of (x,y) position offset of the corresponding volumes (default=[])
+        If [] is supplied, (0,0) is assumed for every Volume
     
     If there are overlaps between different volumes, the last volume in the 
     list is used.
@@ -170,6 +171,8 @@ class MotherVolume(Volume):
     def __init__(self, volumes=[], offsets=[]):
         import numpy
         self.volumes = volumes
+        if offsets == []:
+            offsets = [(0,0) for i in xrange(len(volumes))]
         self.offsets = numpy.array(offsets)
         self._set_bbox()
     def add_volume(self, volume, offset=(0,0)):
@@ -207,7 +210,7 @@ class MotherVolume(Volume):
         """
         volume = self.get_volume(pos_x, pos_y)
         if volume:            
-            return self.material.get_neutron_mfp(energy)
+            return volume.material.get_neutron_mfp(energy)
         else:
             return []
     def get_gamma_mfp(self, pos_x, pos_y, energy):
@@ -216,7 +219,7 @@ class MotherVolume(Volume):
         """
         volume = self.get_volume(pos_x, pos_y)
         if volume:            
-            return self.material.get_gamma_mfp(energy)
+            return volume.material.get_gamma_mfp(energy)
         else:
             return []
 

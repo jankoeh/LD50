@@ -8,6 +8,22 @@ Created on Sun Oct  5 18:05:05 2014
 from physics import q_e, g, cm3, amu, eV, MeV, cm2, m3, N_A, barn
 
 class Material(object):
+    """
+    Defines a Material composed of a single element
+    
+    Args:
+    -----
+    Z : int
+        Charge number (given in units of amu)
+    A : float
+        Atomic mass or mass number (given in units of amu)
+    rho : float
+        Density given in arbitrary format, e.g. 1*g/cm3 for water
+    n_x_sections : str
+        File for neutron X sections (optional)
+    g_x_sections : str
+        File for gamma X sections (optional)
+    """
     def __init__(self, Z, A, rho, n_x_sections=None, g_x_sections=None):
         self.Z = Z
         self.A = A
@@ -133,6 +149,7 @@ class Water(Material):
 class CesiumIodide(Material):
     def __init__(self, load_x_sections=True):
         from physics import barn
+        self.rho = 4.51*g/cm3
         if load_x_sections:
             from numpy import loadtxt
             from scipy.interpolate import interp1d
@@ -145,7 +162,7 @@ class CesiumIodide(Material):
             sigma_I = loadtxt("X-sections/n_X_section_I.txt", 
                               usecols=[1,3,5], skiprows=2).ravel()
             self.n_xsec_Cs = interp1d(energy_Cs*eV, sigma_Cs*barn)
-            self.n_xsec_O = interp1d(energy_I*eV, sigma_I*barn)
+            self.n_xsec_I = interp1d(energy_I*eV, sigma_I*barn)
             self.n_dens_Cs = 1./(259.81*g/N_A)*4.51*g/cm3
             self.n_dens_I = 1./(259.81*g/N_A)*4.51*g/cm3
             g_energy, attenuation = loadtxt('X-sections/g_X_section_CsI.txt', 
@@ -156,7 +173,7 @@ class CesiumIodide(Material):
     def get_mean_ex_pot(self):
         return 10 * q_e * (55.+53.)/2
     def get_e_density(self):
-        return (55*1.9*g/cm3/133./amu +   53*4.933*g/cm3/127/amu)/2
+        return (55./133.+  53./127.)*4.51*g/cm3/amu/ 2
     def get_neutron_mfp(self, energy):
         """
         returns mfp for H and O
