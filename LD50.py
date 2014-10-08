@@ -118,13 +118,8 @@ class ApplicationWindow(QtGui.QMainWindow):
         ui_grid = QtGui.QGridLayout()
         ui_grid.addWidget(QtGui.QLabel("Strahlungsart:"), 0, 0)
         self.selector = QtGui.QComboBox()
-        self.selector.addItem("Proton")
-        self.selector.addItem("Alpha")
-        self.selector.addItem("Kohlenstoff")
-        self.selector.addItem("Elektron")
-        self.selector.addItem("Muon")
-        self.selector.addItem("Neutron")
-        self.selector.addItem("Gamma/X-Ray")
+        from particles import TABLE as p_tbl
+        self.selector.addItems(p_tbl.keys())
         
         ui_grid.addWidget(self.selector, 0, 1)
         ui_grid.addWidget(QtGui.QLabel("Energie / MeV"), 1, 0)
@@ -133,7 +128,8 @@ class ApplicationWindow(QtGui.QMainWindow):
 
         ui_grid.addWidget(QtGui.QLabel("Einfallsrichtung:"), 2, 0)
         self.sel_dir = QtGui.QComboBox()
-        self.sel_dir.addItems(['Isotrop', 'Strahl', u"Höhenstrahlung"])
+        from guns import TABLE as g_tbl
+        self.sel_dir.addItems(g_tbl.keys())
         ui_grid.addWidget(self.sel_dir, 2, 1)
 
         ui_grid.addWidget(QtGui.QLabel("Darstellung in:"), 5, 0)
@@ -211,63 +207,19 @@ Ein Tool zur Visualisierung von Strahlenschäden .
         self.rad_plot.clear_figure()
 
     def particle_generator(self):
-        from physics import ChargedParticle, cos_law, MeV, amu, q_e, deg
+        from physics import MeV
         from setup import WORLD
-        from numpy.random import rand
 
         self.rad_plot.size = float(self.b_size.text())
         energy = float(self.energy.text())
-        x0, y0, x1, y1 = WORLD.bbox
-        if self.sel_dir.currentText() == "Isotrop":
-            pos = rand()*((x1-x0)+2*(y1-y0))
-            if pos < y1-y0:
-                direction = cos_law()
-                pos_x = x0
-                pos_y = pos
-            elif pos < y1-y0 + x1-x0:
-                direction = cos_law() + 270*deg
-                pos_x = pos-(y1-y0)
-                pos_y = y1
-            else:
-                direction = cos_law() + 180*deg
-                pos_x = x1
-                pos_y = pos - (y1-y0 + x1-x0)
-        elif self.sel_dir.currentText() == "Strahl":
-            direction = 0*deg
-            pos_x = x0
-            pos_y = y0+rand()*(y1-y0)
-        elif self.sel_dir.currentText() == u"Höhenstrahlung":
-            from physics import cos_square
-            direction = cos_square()+270*deg            
-            pos_x = x0+rand()*(x1-x0)
-            pos_y = y1            
+        from guns import TABLE as g_tbl
+        gun = str(self.sel_dir.currentText())
+        pos, dir = g_tbl[gun](WORLD.bbox)
 
-        if self.selector.currentText() == "Proton":
-            self.rad_plot.particle = ChargedParticle(1*amu, 1*q_e, energy*MeV,
-                                        [pos_x, pos_y], direction)
-        elif self.selector.currentText() == "Alpha":
-            self.rad_plot.particle = ChargedParticle(4*amu, 2*q_e, energy*MeV,
-                                        [pos_x, pos_y], direction)
-        elif self.selector.currentText() == "Kohlenstoff":
-            self.rad_plot.particle = ChargedParticle(6*amu, 12*q_e, energy*MeV,
-                                        [pos_x, pos_y], direction)                                        
-        elif self.selector.currentText() == "Elektron":
-            from physics import m_e
-            self.rad_plot.particle = ChargedParticle(m_e, q_e, energy*MeV,
-                                        [pos_x, pos_y], direction)
-        elif self.selector.currentText() == "Muon":
-            from physics import m_muon
-            self.rad_plot.particle = ChargedParticle(m_muon, q_e, energy*MeV,
-                                        [pos_x, pos_y], direction)
-        elif self.selector.currentText() == "Neutron":
-            from physics import Neutron
-            self.rad_plot.particle = Neutron(amu, 0, energy*MeV,
-                                        [pos_x, pos_y], direction)
-            self.b_gray.setChecked(False)
-        elif self.selector.currentText() == "Gamma/X-Ray":
-            from physics import Gamma
-            self.rad_plot.particle = Gamma(amu, 0, energy*MeV,
-                                        [pos_x, pos_y], direction)
+        from particles import TABLE as p_tbl
+        particle = str(self.selector.currentText())
+        self.rad_plot.particle = p_tbl[particle](energy*MeV, pos, dir)
+        if particle in ["Neutron", "Gamma/X-Ray"]:
             self.b_gray.setChecked(False)
         self.rad_plot.show_dose_equivalent = self.b_sievert.isChecked()
 

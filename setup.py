@@ -4,23 +4,15 @@ Created on Sun Oct  5 17:58:59 2014
 Some file to define geometry
 @author: koehler
 """
-WORLD = None
+from physics import Volume, MotherVolume, cm
+from materials import TABLE as m_tbl
 
-from physics import Volume, MotherVolume, g, cm3
+HUMAN = MotherVolume([Volume('gfx/torso2.png', 'Body', m_tbl['H2O'])])
 
-from materials import Material
-silicon = Material(14, 28.085, 2.336*g/cm3 ,
-                   "X-sections/n_X_section_Si.txt", 
-                   "X-sections/g_X_section_Si.txt" )
-
-from materials import Water, CesiumIodide
-
-HUMAN = MotherVolume([Volume('gfx/torso2.png', 'Body', Water())])
-
-
-ABC = Volume("gfx/RAD_ABC.png", "ABC", silicon, s2px=7450.)
-D = Volume("gfx/RAD_D.png", "D", CesiumIodide(), s2px=7450.)
-EF = Volume("gfx/RAD_EF.png", "EF", Water(), s2px=7450.)
+ABC = Volume("gfx/RAD_ABC.png", "ABC", m_tbl['Silicon'], s2px=1192./16/cm)
+D = Volume("gfx/RAD_D.png", "D", m_tbl['CsI'], s2px=1192./16/cm)
+EF = Volume("gfx/RAD_EF.png", "EF", m_tbl['H2O'], s2px=1192./16/cm)
 RAD = MotherVolume([ABC, D, EF])
 
+#Define your WORLD here
 WORLD = HUMAN

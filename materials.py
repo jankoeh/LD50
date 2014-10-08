@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-Created on Sun Oct  5 18:05:05 2014
+This file contains the Material classes and a TABLE of defined Materials
 
-@author: koehler
+
+TABLE usage example:
+--------------------
+> list_of_available_materials = TABLE.keys()
+> water = TABLE['Water']
 """
 
 from physics import q_e, g, cm3, amu, eV, MeV, cm2, m3, N_A, barn
+TABLE = {}
 
 class Material(object):
     """
@@ -187,5 +192,9 @@ class CesiumIodide(Material):
         """        
         return [1./(self.g_attn(energy)*self.rho)]    
 
-        
+TABLE['H2O'] = Water()
+TABLE['CsI'] = CesiumIodide()
+TABLE['Silicon'] = Material(14, 28.085, 2.336*g/cm3 ,
+                            "X-sections/n_X_section_Si.txt", 
+                            "X-sections/g_X_section_Si.txt" )
             
