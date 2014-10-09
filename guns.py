@@ -125,22 +125,22 @@ def gen_isotrop(bbox):
     from physics import deg
     from numpy.random import rand
     x0, y0, x1, y1 = bbox    
-    pos = rand()*((x1-x0)+2*(y1-y0)*2)
-    if pos < y1-y0:
+    side = rand()*((x1-x0)+2*(y1-y0)*2)
+    if side < y1-y0:
         dir = cos_law()
         pos_x = x0
-        pos_y = pos
-    elif pos < y1-y0 + x1-x0:
+        pos_y = y0 + rand()*(y1-y0)
+    elif side < y1-y0 + x1-x0:
         dir = cos_law() + 270*deg
-        pos_x = pos-(y1-y0)
+        pos_x = x0 + rand()*(x1-x0)
         pos_y = y1
-    elif pos < (y1-y0)*2 + x1-x0:
+    elif side < (y1-y0)*2 + x1-x0:
         dir= cos_law() + 180*deg
         pos_x = x1
-        pos_y = pos - (y1-y0 + x1-x0)    
+        pos_y = y0 + rand()*(y1-y0)   
     else:
         dir = cos_law() + 90*deg
-        pos_x = pos-(y1-y0)
+        pos_x = x0 + rand()*(x1-x0)
         pos_y = y0  
     return [pos_x, pos_y], dir
     

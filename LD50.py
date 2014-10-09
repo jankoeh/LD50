@@ -65,7 +65,7 @@ class ParticlePlotCanvas(MyMplCanvas):
     def update_figure(self):
         from setup import WORLD
         from physics import MeV, eV
-        ds = (WORLD.bbox[2]-WORLD.bbox[0])/100
+        ds = (WORLD.bbox[2]-WORLD.bbox[0])/100.
         pos, dE, dl = self.particle.step(ds)
         pos  = pos.mean(axis=0)
         if self.show_dose_equivalent:

@@ -51,7 +51,7 @@ def quality_factor(L):
     else:
         return 300./sqrt(L)
 
-        
+
 class Volume(object):
     def __init__(self, fn_image, name, material, s2px=1e3):
         from scipy.misc import imread
@@ -63,13 +63,12 @@ class Volume(object):
         self._set_bbox()
     def is_inside(self, pos_x, pos_y):
         """ """
-        pos_x = int(pos_x*self.s2px)
-        pos_y = int(pos_y*self.s2px)
-        if self.image.shape[0]<=pos_y or pos_y<0 or \
-           self.image.shape[1]<=pos_x or pos_x<0:
-            return False
-        if self.image[-pos_y][pos_x][3]>0:
-            return True
+        x0, y0, x1, y1 = self.bbox
+        if (x0 <= pos_x <= x1) and (y0 <= pos_y <= y1):
+            pos_x = int(pos_x*self.s2px)
+            pos_y = int(pos_y*self.s2px)
+            if self.image[-pos_y][pos_x][3]>0:
+                return True
         else:
             return False
     def get_mexpot_edens(self, pos_x, pos_y):
@@ -85,7 +84,7 @@ class Volume(object):
         """
         Returns the mean free path for neutrons
         """
-        if self.is_inside(pos_x, pos_y):            
+        if self.is_inside(pos_x, pos_y):
             return self.material.get_neutron_mfp(energy)
         else:
             return []
@@ -93,7 +92,7 @@ class Volume(object):
         """
         Returns the mean free path for neutrons
         """
-        if self.is_inside(pos_x, pos_y):            
+        if self.is_inside(pos_x, pos_y):
             return self.material.get_gamma_mfp(energy)
         else:
             return []
@@ -108,7 +107,7 @@ class Volume(object):
             return True
         else:
             return False
-            
+
     def get_image_info(self):
         """
         Returns a list of [[image fn, scaling factor, offset]]
@@ -119,7 +118,7 @@ class Volume(object):
 class MotherVolume(Volume):
     """
     Manages a list of volumes.
-    
+
     Args:
     -----
     volumes : list
@@ -127,10 +126,10 @@ class MotherVolume(Volume):
     offsets : list
         list of (x,y) position offset of the corresponding volumes (default=[])
         If [] is supplied, (0,0) is assumed for every Volume
-    
-    If there are overlaps between different volumes, the last volume in the 
+
+    If there are overlaps between different volumes, the last volume in the
     list is used.
-    
+
     Note:
     -----
     MotherVolumes can contain MotherVolumes
@@ -152,13 +151,13 @@ class MotherVolume(Volume):
     def get_volume(self, pos_x, pos_y):
         for i in xrange(1, len(self.volumes)+1):
             x0, y0 = self.offsets[-i]
-            if self.volumes[-i].is_inside(pos_x, pos_y):
+            if self.volumes[-i].is_inside(pos_x-x0, pos_y-y0):
                 return self.volumes[-i]
         return None
     def is_inside(self, pos_x, pos_y):
         for i in xrange(1, len(self.volumes)+1):
             x0, y0 = self.offsets[-i]
-            if self.volumes[-i].is_inside(pos_x, pos_y):
+            if self.volumes[-i].is_inside(pos_x-x0, pos_y-y0):
                 return True
         return False
     def get_mexpot_edens(self, pos_x, pos_y):
@@ -176,7 +175,7 @@ class MotherVolume(Volume):
         Returns the mean free path for neutrons
         """
         volume = self.get_volume(pos_x, pos_y)
-        if volume:            
+        if volume:
             return volume.material.get_neutron_mfp(energy)
         else:
             return []
@@ -185,7 +184,7 @@ class MotherVolume(Volume):
         Returns the mean free path for neutrons
         """
         volume = self.get_volume(pos_x, pos_y)
-        if volume:            
+        if volume:
             return volume.material.get_gamma_mfp(energy)
         else:
             return []
@@ -215,5 +214,5 @@ class MotherVolume(Volume):
         bboxes = array(bboxes)
         self.bbox = (bboxes[:,0].min(), bboxes[:,1].min(),  #x0, y0
                      bboxes[:,2].max(), bboxes[:,3].max()) #x1, y1
-                
+
 
