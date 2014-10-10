@@ -64,7 +64,7 @@ class Volume(object):
     def is_inside(self, pos_x, pos_y):
         """ """
         x0, y0, x1, y1 = self.bbox
-        if (x0 <= pos_x <= x1) and (y0 <= pos_y <= y1):
+        if (x0 <= pos_x < x1) and (y0 <= pos_y < y1):
             pos_x = int(pos_x*self.s2px)
             pos_y = int(pos_y*self.s2px)
             if self.image[-pos_y][pos_x][3]>0:

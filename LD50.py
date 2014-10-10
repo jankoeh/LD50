@@ -39,7 +39,6 @@ class ParticlePlotCanvas(MyMplCanvas):
     """
     def __init__(self, *args, **kwargs):
         from setup import WORLD
-        self.particle = None # particle Class object
         self.path = []
         self.dE = []
         self.show_dose_equivalent = False
@@ -51,6 +50,8 @@ class ParticlePlotCanvas(MyMplCanvas):
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), \
                                self.update_figure)
         self.size = 30
+        self.particles = []
+        self.p_lines = []
 
     def compute_initial_figure(self):
         from matplotlib.pyplot import imread
@@ -59,38 +60,49 @@ class ParticlePlotCanvas(MyMplCanvas):
             image = imread(fn_image)
             x0, y0, x1, y1 = bbox
             self.axes.imshow(image, extent=(x0, x1, y0, y1))
-        self.p_line = self.axes.plot([], [], 'bo')[0]
         self.scat = self.axes.scatter([], [], s=[], c='red',
                                       alpha=0.4, linewidth=0)
     def update_figure(self):
         from setup import WORLD
         from physics import MeV, eV
         ds = (WORLD.bbox[2]-WORLD.bbox[0])/100.
-        pos, dE, dl = self.particle.step(ds)
-        pos  = pos.mean(axis=0)
-        if self.show_dose_equivalent:
-                from physics import quality_factor
-                dE = sum([quality_factor(i/dl)*i for i in dE])
-        else:
-            dE = sum(dE)
-        if dE/MeV > 0.001:    
-            self.dE.append((dE/MeV*self.size)**2/1000.) #area->radius
-            self.path.append(pos)
-        self.scat.set_offsets(self.path)
-        self.scat._sizes = self.dE
-        self.p_line.set_data([self.particle.pos_x], [self.particle.pos_y])
+        for particle, line in zip(self.particles, self.p_lines):
+            pos, dE, dl = particle.step(ds)
+            pos  = pos.mean(axis=0)
+            if self.show_dose_equivalent:
+                    from physics import quality_factor
+                    dE = sum([quality_factor(i/dl)*i for i in dE])
+            else:
+                dE = sum(dE)
+            if dE/MeV > 0.001:    
+                self.dE.append((dE/MeV*self.size)**2/1000.) #area->radius
+                self.path.append(pos)
+            self.scat.set_offsets(self.path)
+            self.scat._sizes = self.dE
+            line.set_data([particle.pos_x], [particle.pos_y])
+            if particle.energy <= 1*eV or \
+               not WORLD.is_in_bbox(particle.pos_x, particle.pos_y):
+                self.particles.remove(particle)
+                self.p_lines.remove(line)
+                self.axes.lines.remove(line)
         self.draw()
-        if self.particle.energy <= 1*eV or \
-            not WORLD.is_in_bbox(self.particle.pos_x, self.particle.pos_y):
-            self.p_line.set_data([], [])
-            self.draw()
+        if len(self.particles) == 0:
             self.timer.stop()
 
-    def clear_figure(self):
+    def add_particle(self, particle):
+        self.particles.append(particle)
+        line = self.axes.plot([particle.pos_x], [particle.pos_y], 'bo')[0]
+        self.p_lines.append(line)
+
+    def clear(self):
         self.path = []
         self.dE = []
         self.scat.set_offsets(self.path)
         self.scat._sizes = self.dE
+        for line in self.p_lines:
+            self.axes.lines.remove(line)
+        self.particles = []
+        self.p_lines = []
         self.draw()
 
 
@@ -198,13 +210,13 @@ Ein Tool zur Visualisierung von Strahlenschäden .
  
     def start_run(self):
         #for i in xrange(self.b_shots.value()):
-        self.rad_plot.timer.stop()
+        #self.rad_plot.timer.stop()
         self.particle_generator()
         self.rad_plot.timer.start(20)
 
     def clear(self):
         self.rad_plot.timer.stop()
-        self.rad_plot.clear_figure()
+        self.rad_plot.clear()
 
     def particle_generator(self):
         from physics import MeV
@@ -218,7 +230,7 @@ Ein Tool zur Visualisierung von Strahlenschäden .
 
         from particles import TABLE as p_tbl
         particle = str(self.selector.currentText())
-        self.rad_plot.particle = p_tbl[particle](energy*MeV, pos, dir)
+        self.rad_plot.add_particle(p_tbl[particle](energy*MeV, pos, dir))
         if particle in ["Neutron", "Gamma/X-Ray"]:
             self.b_gray.setChecked(False)
         self.rad_plot.show_dose_equivalent = self.b_sievert.isChecked()
