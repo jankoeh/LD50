@@ -9,7 +9,7 @@ TABLE usage example:
 > water = TABLE['Water']
 """
 
-from physics import q_e, g, cm3, amu, eV, MeV, cm2, m3, N_A, barn
+from .physics import q_e, g, cm3, amu, eV, MeV, cm2, m3, N_A, barn
 TABLE = {}
 
 class Material(object):
@@ -112,7 +112,7 @@ class Compound(Material):
 
 class Water(Material):
     def __init__(self, load_x_sections=True):
-        from physics import barn
+        from .physics import barn
         super(Water, self).__init__(8., 16., 1.*g/cm3)      
         if load_x_sections:
             from numpy import loadtxt
@@ -153,7 +153,7 @@ class Water(Material):
 
 class CesiumIodide(Material):
     def __init__(self, load_x_sections=True):
-        from physics import barn
+        from .physics import barn
         self.rho = 4.51*g/cm3
         if load_x_sections:
             from numpy import loadtxt

@@ -13,14 +13,12 @@ class ParticleCanvas(QtGui.QGraphicsView):
         super(ParticleCanvas, self).__init__(parent)
         self.max_width = max_width
         self.max_height = max_height
-        from PyQt4.QtOpenGL import QGLWidget
-        self.setViewport(QGLWidget())
         self.timer = QtCore.QTimer(self)
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), \
                                self.update_figure)
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
-        from setup import WORLD
+        from config import WORLD
         x0, y0, x1, y1 = WORLD.bbox
         self.s2px = min([self.max_width/(x1-x0), self.max_height/(y1-y0)])
         self.create_scene()
@@ -33,10 +31,8 @@ class ParticleCanvas(QtGui.QGraphicsView):
         self.dmg_pen = QtGui.QPen(QtGui.QColor(255,0,0,0))
         self.dmg_brush = QtGui.QBrush(QtGui.QColor(255,0,0,100))
 
-        self.show_dose_equivalent = False
-
     def create_scene(self):
-        from setup import WORLD
+        from config import WORLD
         scene = QtGui.QGraphicsScene()
         for fn_image, bbox in WORLD.get_image_info():
             image = QtGui.QPixmap(fn_image)
@@ -51,7 +47,7 @@ class ParticleCanvas(QtGui.QGraphicsView):
         """ 
         Transforms world coordninates to image based coordinates
         """
-        from setup import WORLD
+        from config import WORLD
         x0, y0, x1, y1 = WORLD.bbox
         return (pos_x-x0)*self.s2px, (y1-pos_y)*self.s2px
         
@@ -63,24 +59,20 @@ class ParticleCanvas(QtGui.QGraphicsView):
         self.p_dots.append(dot)
         
     def update_figure(self):
-        from setup import WORLD
-        from physics import MeV, eV
+        from config import WORLD
+        from src.physics import MeV, eV
         ds = (WORLD.bbox[2]-WORLD.bbox[0])/100.
         for particle, dot in zip(self.particles, self.p_dots):
             pos, dE, dl = particle.step(ds)
             pos_x, pos_y = self.world_to_canvas(*pos.mean(axis=0))
-            dot.setRect(pos_x-5, pos_y-5, 10, 10)
-            if self.show_dose_equivalent:
-                    from physics import quality_factor
-                    dE = sum([quality_factor(i/dl)*i for i in dE])
-            else:
-                dE = sum(dE)
+            dE = sum(dE)
             if dE/MeV > 0.001:
                 radius = (dE/MeV*self.size)/100.
                 dmg = self.scene().addEllipse(pos_x-radius, pos_y-radius, 
                                               radius*2, radius*2, 
                                               self.dmg_pen, self.dmg_brush)
                 self.dmg_dots.append(dmg)
+            dot.setRect(pos_x-5, pos_y-5, 10, 10)
             if particle.energy <= 1*eV or \
                not WORLD.is_in_bbox(particle.pos_x, particle.pos_y):
                 self.particles.remove(particle)
@@ -124,7 +116,7 @@ class ApplicationWindow(QtGui.QMainWindow):
         ui_grid = QtGui.QGridLayout()
         ui_grid.addWidget(QtGui.QLabel("Strahlungsart:"), 0, 0)
         self.selector = QtGui.QComboBox()
-        from particles import TABLE as p_tbl
+        from src.particles import TABLE as p_tbl
         self.selector.addItems(p_tbl.keys())
         
         ui_grid.addWidget(self.selector, 0, 1)
@@ -134,17 +126,9 @@ class ApplicationWindow(QtGui.QMainWindow):
 
         ui_grid.addWidget(QtGui.QLabel("Einfallsrichtung:"), 2, 0)
         self.sel_dir = QtGui.QComboBox()
-        from guns import TABLE as g_tbl
+        from src.guns import TABLE as g_tbl
         self.sel_dir.addItems(g_tbl.keys())
         ui_grid.addWidget(self.sel_dir, 2, 1)
-
-        ui_grid.addWidget(QtGui.QLabel("Darstellung in:"), 5, 0)
-        self.b_gray = QtGui.QRadioButton("Gray (Dosis)")
-        self.b_gray.setChecked(True)
-        self.b_sievert = QtGui.QRadioButton(u"Sievert (Äquivalentdosis)")
-        ui_grid.addWidget(self.b_gray, 5, 1)
-        ui_grid.addWidget(self.b_sievert, 6, 1)
-
 
         ui_grid.addWidget(QtGui.QLabel(u"Größe Darstellung:"), 7, 0)
         self.b_size = QtGui.QSpinBox()
@@ -167,7 +151,6 @@ class ApplicationWindow(QtGui.QMainWindow):
 
         self.rad_plot = ParticleCanvas(self.main_widget)
         l.addWidget(ui_widget)
-        #l.addWidget(sc)
         l.addWidget(self.rad_plot)
 
         self.main_widget.setFocus()
@@ -202,8 +185,6 @@ Ein Tool zur Visualisierung von Strahlenschäden .
 
  
     def start_run(self):
-        #for i in xrange(self.b_shots.value()):
-        #self.rad_plot.timer.stop()
         self.particle_generator()
         self.rad_plot.timer.start(20)
 
@@ -212,21 +193,19 @@ Ein Tool zur Visualisierung von Strahlenschäden .
         self.rad_plot.clear()
 
     def particle_generator(self):
-        from physics import MeV
-        from setup import WORLD
+        from src.physics import MeV
+        from config import WORLD
 
         self.rad_plot.size = float(self.b_size.text())
         energy = float(self.energy.text())
-        from guns import TABLE as g_tbl
+        from src.guns import TABLE as g_tbl
         gun = str(self.sel_dir.currentText())
         pos, dir = g_tbl[gun](WORLD.bbox)
 
-        from particles import TABLE as p_tbl
+        from src.particles import TABLE as p_tbl
         particle = str(self.selector.currentText())
         self.rad_plot.add_particle(p_tbl[particle](energy*MeV, pos, dir))
-        if particle in ["Neutron", "Gamma/X-Ray"]:
-            self.b_gray.setChecked(False)
-        self.rad_plot.show_dose_equivalent = self.b_sievert.isChecked()
+
 
 qApp = QtGui.QApplication(sys.argv)
 aw = ApplicationWindow()

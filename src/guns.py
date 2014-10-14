@@ -57,7 +57,7 @@ def gen_beam_top(bbox):
     pos, dir : list, float
         pos is the [x, y] position, dir the angle
     """
-    from physics import deg
+    from .physics import deg
     from numpy.random import rand
     x0, y0, x1, y1 = bbox
     x = (x0+x1)/2 + (x1-x0)/5 * (rand()-.5)
@@ -100,7 +100,7 @@ def gen_beam_right(bbox):
     pos, dir : list, float
         pos is the [x, y] position, dir the angle
     """
-    from physics import deg
+    from .physics import deg
     from numpy.random import rand
     x0, y0, x1, y1 = bbox
     x = x1
@@ -122,7 +122,7 @@ def gen_isotrop(bbox):
     pos, dir : list, float
         pos is the [x, y] position, dir the angle
     """
-    from physics import deg
+    from .physics import deg
     from numpy.random import rand
     x0, y0, x1, y1 = bbox    
     side = rand()*((x1-x0)+2*(y1-y0)*2)

@@ -4,8 +4,8 @@ Created on Sun Oct  5 17:58:59 2014
 Some file to define geometry
 @author: koehler
 """
-from physics import Volume, MotherVolume, cm
-from materials import TABLE as m_tbl
+from src.physics import Volume, MotherVolume, cm
+from src.materials import TABLE as m_tbl
 
 HUMAN = MotherVolume([Volume('gfx/torso2.png', 'Body', m_tbl['H2O'])])
 
@@ -15,4 +15,4 @@ EF = Volume("gfx/RAD_EF.png", "EF", m_tbl['H2O'], s2px=1192./16/cm)
 RAD = MotherVolume([ABC, D, EF])
 
 #Define your WORLD here
-WORLD = HUMAN
+WORLD = RAD

@@ -7,7 +7,7 @@ TABLE usage example:
 > list_of_available_particles = TABLE.keys()
 > proton = TABLE['Proton'](energy, [x, y], dir)
 """
-from physics import mm, eV, c_light, amu, q_e, m_e, m_muon, MeV, deg, pi, \
+from .physics import mm, eV, c_light, amu, q_e, m_e, m_muon, MeV, deg, pi, \
     epsilon_0, keV
 
 TABLE = {}
@@ -64,7 +64,7 @@ class ChargedParticle(Particle):
         Beethe Bloch
         """
         from numpy import log
-        from setup import WORLD
+        from config import WORLD
         mexpot, edens = WORLD.get_mexpot_edens(self.pos_x, self.pos_y)
         v = self.get_velocity()
         z = self.charge/q_e
@@ -81,13 +81,13 @@ class Neutron(Particle):
         straggeling
         """
         from numpy.random import rand
-        from setup import WORLD
+        from config import WORLD
         dE = 0
         for mfp in WORLD.get_neutron_mfp(self.pos_x, self.pos_y, self.energy):
             if ds/mfp> rand():
                 dE += min((20*MeV, self.energy*rand()))
             if dE > 10*keV:
-                self.dir += rand()*40*deg-20*deg
+                self.dir += (rand()-.5)*80*deg
         return dE
 
 class Gamma(Particle):
@@ -100,7 +100,7 @@ class Gamma(Particle):
         0.1MeV as photo ionization.
         """
         from numpy.random import rand
-        from setup import WORLD
+        from config import WORLD
         dE = 0
         for mfp in WORLD.get_gamma_mfp(self.pos_x, self.pos_y, self.energy):
             if ds/mfp> rand(): #Crappy way to 'simulate' photo ionization 
@@ -109,7 +109,7 @@ class Gamma(Particle):
                 else:
                     dE +=  min((20*MeV, self.energy*rand()/2))
             if dE > 10*keV:
-                self.dir += rand()*40*deg-20*deg
+                self.dir += (rand()-.5)*80*deg
         return dE
 
 

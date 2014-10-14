@@ -18,12 +18,13 @@ Set a human body via `WORLD = HUMAN`, set RAD via `WORLD = RAD`.
 
 Install
 -------
-LD50 is written in Python 2.7 and makes use of numpy and matplotlib library.
+LD50 is written in Python 2.7 and makes use of Py QT and numpy/scipy.
 To get a complete and ready-to-use python setup, you can download https://code.google.com/p/pythonxy/
 
 If you don't want to download/install the whole phythonxy package, you have to download/install 
 * https://www.python.org/download/releases/2.7.8/
 * http://www.scipy.org/scipylib/download.html
+* http://www.riverbankcomputing.com/software/pyqt/download
 
 To Start the LD50, just execute LD50.py
 
