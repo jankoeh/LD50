@@ -3,107 +3,101 @@
 
 import sys
 from PyQt4 import QtGui, QtCore
-from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg
 
-
-
-class MyMplCanvas(FigureCanvasQTAgg):
-    """Ultimately, this is a QWidget (as well as a FigureCanvasAgg, etc.)."""
-    def __init__(self, parent=None, width=5, height=8, dpi=100):
-        from matplotlib.figure import Figure
-        fig = Figure(figsize=(width, height), dpi=dpi)
-        self.axes = fig.add_axes([0, 0, 1, 1])
-        self.axes.set_xlim(0, 1)
-        self.axes.set_ylim(0, 1)
-        self.axes.set_xticks([])
-        self.axes.set_yticks([])
-        self.compute_initial_figure()
-
-        FigureCanvasQTAgg.__init__(self, fig)
-        self.setParent(parent)
-
-        FigureCanvasQTAgg.setSizePolicy(self,
-                                        QtGui.QSizePolicy.Expanding,
-                                        QtGui.QSizePolicy.Expanding)
-        FigureCanvasQTAgg.updateGeometry(self)
-
-    def compute_initial_figure(self):
-        pass
-
-    def clear_figure(self):
-        pass
-
-
-class ParticlePlotCanvas(MyMplCanvas):
-    """
-    """
-    def __init__(self, *args, **kwargs):
-        from setup import WORLD
-        self.path = []
-        self.dE = []
-        self.show_dose_equivalent = False
-        MyMplCanvas.__init__(self, *args, **kwargs)
-        x0, y0, x1, y1 = WORLD.bbox
-        self.axes.set_xlim(x0, x1)
-        self.axes.set_ylim(y0, y1)
+class ParticleCanvas(QtGui.QGraphicsView):
+    def __init__(self, parent=None, max_width=400, max_height=600):
+        """
+        QGraphicsView that will show an image scaled to the current widget size
+        using events
+        """
+        super(ParticleCanvas, self).__init__(parent)
+        self.max_width = max_width
+        self.max_height = max_height
+        from PyQt4.QtOpenGL import QGLWidget
+        self.setViewport(QGLWidget())
         self.timer = QtCore.QTimer(self)
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), \
                                self.update_figure)
-        self.size = 30
-        self.particles = []
-        self.p_lines = []
-
-    def compute_initial_figure(self):
-        from matplotlib.pyplot import imread
+        self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
+        self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         from setup import WORLD
+        x0, y0, x1, y1 = WORLD.bbox
+        self.s2px = min([self.max_width/(x1-x0), self.max_height/(y1-y0)])
+        self.create_scene()
+        
+        self.particles = []
+        self.p_dots = []
+        self.dmg_dots = []
+        self.p_pen = QtGui.QPen(QtGui.QColor(0,0,255,0))
+        self.p_brush = QtGui.QBrush(QtGui.QColor(0,0,255))
+        self.dmg_pen = QtGui.QPen(QtGui.QColor(255,0,0,0))
+        self.dmg_brush = QtGui.QBrush(QtGui.QColor(255,0,0,100))
+
+        self.show_dose_equivalent = False
+
+    def create_scene(self):
+        from setup import WORLD
+        scene = QtGui.QGraphicsScene()
         for fn_image, bbox in WORLD.get_image_info():
-            image = imread(fn_image)
+            image = QtGui.QPixmap(fn_image)
             x0, y0, x1, y1 = bbox
-            self.axes.imshow(image, extent=(x0, x1, y0, y1))
-        self.scat = self.axes.scatter([], [], s=[], c='red',
-                                      alpha=0.4, linewidth=0)
+            image = image.scaled((x1-x0)*self.s2px, (y1-y0)*self.s2px)
+            s_image = scene.addPixmap(image)
+            y_offset = (WORLD.bbox[3]-y1)*self.s2px
+            s_image.setOffset(x0*self.s2px,y_offset)
+        self.setScene(scene)
+
+    def world_to_canvas(self, pos_x, pos_y):
+        """ 
+        Transforms world coordninates to image based coordinates
+        """
+        from setup import WORLD
+        x0, y0, x1, y1 = WORLD.bbox
+        return (pos_x-x0)*self.s2px, (y1-pos_y)*self.s2px
+        
+    def add_particle(self, particle):
+        self.particles.append(particle)
+        pos_x, pos_y = self.world_to_canvas(particle.pos_x, particle.pos_y)
+        dot = self.scene().addEllipse(pos_x-5, pos_y-5, 10, 10, 
+                                      self.p_pen, self.p_brush)
+        self.p_dots.append(dot)
+        
     def update_figure(self):
         from setup import WORLD
         from physics import MeV, eV
         ds = (WORLD.bbox[2]-WORLD.bbox[0])/100.
-        for particle, line in zip(self.particles, self.p_lines):
+        for particle, dot in zip(self.particles, self.p_dots):
             pos, dE, dl = particle.step(ds)
-            pos  = pos.mean(axis=0)
+            pos_x, pos_y = self.world_to_canvas(*pos.mean(axis=0))
+            dot.setRect(pos_x-5, pos_y-5, 10, 10)
             if self.show_dose_equivalent:
                     from physics import quality_factor
                     dE = sum([quality_factor(i/dl)*i for i in dE])
             else:
                 dE = sum(dE)
-            if dE/MeV > 0.001:    
-                self.dE.append((dE/MeV*self.size)**2/1000.) #area->radius
-                self.path.append(pos)
-            self.scat.set_offsets(self.path)
-            self.scat._sizes = self.dE
-            line.set_data([particle.pos_x], [particle.pos_y])
+            if dE/MeV > 0.001:
+                radius = (dE/MeV*self.size)/100.
+                dmg = self.scene().addEllipse(pos_x-radius, pos_y-radius, 
+                                              radius*2, radius*2, 
+                                              self.dmg_pen, self.dmg_brush)
+                self.dmg_dots.append(dmg)
             if particle.energy <= 1*eV or \
                not WORLD.is_in_bbox(particle.pos_x, particle.pos_y):
                 self.particles.remove(particle)
-                self.p_lines.remove(line)
-                self.axes.lines.remove(line)
-        self.draw()
+                self.p_dots.remove(dot)
+                self.scene().removeItem(dot)
         if len(self.particles) == 0:
             self.timer.stop()
-
-    def add_particle(self, particle):
-        self.particles.append(particle)
-        line = self.axes.plot([particle.pos_x], [particle.pos_y], 'bo')[0]
-        self.p_lines.append(line)
-
+            
     def clear(self):
-        self.path = []
-        self.dE = []
-        self.scat.set_offsets(self.path)
-        self.scat._sizes = self.dE
-        for line in self.p_lines:
-            self.axes.lines.remove(line)
         self.particles = []
-        self.p_lines = []
-        self.draw()
+        for dot in self.p_dots:
+            self.scene().removeItem(dot)
+        self.p_dots = []
+        for dot in self.dmg_dots:
+            self.scene().removeItem(dot)
+        self.dmg_dots = []
+            
 
 
 class ApplicationWindow(QtGui.QMainWindow):
@@ -135,7 +129,7 @@ class ApplicationWindow(QtGui.QMainWindow):
         
         ui_grid.addWidget(self.selector, 0, 1)
         ui_grid.addWidget(QtGui.QLabel("Energie / MeV"), 1, 0)
-        self.energy = QtGui.QLineEdit("50")
+        self.energy = QtGui.QLineEdit("100")
         ui_grid.addWidget(self.energy, 1, 1)
 
         ui_grid.addWidget(QtGui.QLabel("Einfallsrichtung:"), 2, 0)
@@ -156,7 +150,7 @@ class ApplicationWindow(QtGui.QMainWindow):
         self.b_size = QtGui.QSpinBox()
         self.b_size.setMinimum(1)
         self.b_size.setMaximum(1000)
-        self.b_size.setValue(15)
+        self.b_size.setValue(100)
         ui_grid.addWidget(self.b_size, 7, 1)
 
         btn_start = QtGui.QPushButton("Start")
@@ -171,8 +165,7 @@ class ApplicationWindow(QtGui.QMainWindow):
         ui_widget.setLayout(ui_grid)
 
 
-        self.rad_plot = ParticlePlotCanvas(self.main_widget, width=3,\
-                                           height=4, dpi=100)
+        self.rad_plot = ParticleCanvas(self.main_widget)
         l.addWidget(ui_widget)
         #l.addWidget(sc)
         l.addWidget(self.rad_plot)

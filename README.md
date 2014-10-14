@@ -1,7 +1,7 @@
 LD50
 ====
 
-A simple tool to visualize radiation damage in humans. - Toying around with pyQt and matplotlib.
+A simple tool to visualize radiation damage in humans. - Toying around with pyQt.
 
 Purpose
 -------
@@ -9,7 +9,11 @@ This tools aims at visualizing the damage of different radiation types in the hu
 
 Updates
 -------
-Added the geonetry of the Radiation Assessment Detctor (RAD) (see http://mslrad.boulder.swri.edu/). The simulation setup can be defined in `setup.py`.
+Changed matplotlib backend to Qt.
+
+Usage
+-------
+In addition to the human torso the geonetry of the Radiation Assessment Detector (RAD) (see http://mslrad.boulder.swri.edu/) is also available. The simulation setup can be defined in `setup.py`.
 Set a human body via `WORLD = HUMAN`, set RAD via `WORLD = RAD`.
 
 Install
@@ -20,7 +24,6 @@ To get a complete and ready-to-use python setup, you can download https://code.g
 If you don't want to download/install the whole phythonxy package, you have to download/install 
 * https://www.python.org/download/releases/2.7.8/
 * http://www.scipy.org/scipylib/download.html
-* http://matplotlib.org/downloads.html
 
 To Start the LD50, just execute LD50.py
 
@@ -39,13 +42,6 @@ License
 -------
 This tool is free to use and can be freely modified and distributed. I'm grateful for any contribution to this project.
     
-
-Roadmap
--------
-* Add additional materials
-* Introduce shielding option
-* Detector example
-* Port matplotlib gfx to OpenGL
 
 
 Contact
