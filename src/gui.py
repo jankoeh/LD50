@@ -172,7 +172,6 @@ Ein Tool zur Visualisierung von Strahlenschäden .
         self.run_manager.timer.start(20)
 
     def clear(self):
-        self.run_manager.timer.stop()
         self.run_manager.clear()
 
     def particle_generator(self):

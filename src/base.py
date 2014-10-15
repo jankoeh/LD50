@@ -6,6 +6,11 @@ Created on Wed Oct 15 13:52:34 2014
 """
 
 class RunManager():
+    """
+    The RunManager handles the propagation of one or more particles
+    in the world volume. It also handles connection to plotting canvas
+    and  the energy deposit table.
+    """
     def __init__(self, world):
         self.world = world
         from PyQt4 import QtCore
@@ -20,7 +25,7 @@ class RunManager():
 
     def set_energy_tbl(self, energy_tbl):
         """
-        Set energy table
+        Set energy table, energy_tbl is a QtTable object
         """
         from PyQt4 import QtGui
         self.names = self.world.get_name()
@@ -31,11 +36,15 @@ class RunManager():
             energy_tbl.setItem(i, 0, QtGui.QTableWidgetItem(self.names[i]))
             self.edeps.append(0)
         energy_tbl.setHorizontalHeaderLabels(('Detektor', 'Energiedeposit / MeV'))
-        energy_tbl.setColumnWidth(0, 110)
+        energy_tbl.setColumnWidth(0, 100)
         energy_tbl.setColumnWidth(1, 152)
         self.update_energy_tbl()
         
     def set_canvas(self, canvas):
+        """
+        connect the Draw Canvas object to the RunManager
+        If no canvas is defined - the RunMAnager will provide no grafical output
+        """
         if not self.world:
             print "WORLD not set"
             raise 
@@ -43,13 +52,21 @@ class RunManager():
         self.canvas.set_world(self.world)
 
     def add_particle(self, particle):
+        """
+        Add particle to run_manager
+        """
         particle.set_world(self.world)
         self.particles.append(particle)
         self.canvas.add_particle(particle)
 
-    def step(self):
+    def step(self, ds=None):
+        """
+        propagate all particles by ds
+        If No ds value is given, ds will be selected according to the world size
+        """
         from src.physics import MeV, eV
-        ds = (self.world.bbox[2]-self.world.bbox[0])/100.
+        if not ds:
+            ds = (self.world.bbox[2]-self.world.bbox[0])/100.
         pos_edep = []
         for particle in self.particles:
             pos, dE, dl = particle.step(ds)
@@ -85,10 +102,15 @@ class RunManager():
         for i in xrange(len(self.edeps)):
             self.energy_tbl.setItem(i,1, QtGui.QTableWidgetItem(str(self.edeps[i])))
     def clear(self):
+        """
+        Remove all particles, stop propagation, reset canvas and energy tbl
+        """
+        self.timer.stop()
         self.particles = []
         if self.energy_tbl:
             for i in xrange(len(self.edeps)):
                 self.edeps[i] = 0
+            self.update_energy_tbl()
         if self.canvas:
             self.canvas.clear()
             

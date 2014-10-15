@@ -28,12 +28,12 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.50091446"
-     inkscape:cx="1086.1061"
-     inkscape:cy="436.1773"
+     inkscape:zoom="0.70840002"
+     inkscape:cx="623.38323"
+     inkscape:cy="561.6064"
      inkscape:document-units="px"
-     inkscape:current-layer="layer1"
-     showgrid="true"
+     inkscape:current-layer="layer8"
+     showgrid="false"
      fit-margin-top="100"
      fit-margin-left="100"
      fit-margin-right="100"
@@ -61,10 +61,21 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
+  <g
+     inkscape:groupmode="layer"
+     id="layer8"
+     inkscape:label="Housing">
+    <path
+       style="fill:none;stroke:#808080;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 242.85714,96.91179 0,400 -160,200 0,312.00001 730,0 0,-312.00001 -160,-200 0,-400"
+       id="path3005"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccccccc" />
+  </g>
   <g
      inkscape:groupmode="layer"
      id="layer2"

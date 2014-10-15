@@ -9,11 +9,12 @@ This tools aims at visualizing the damage of different radiation types in the hu
 
 Updates
 -------
-Changed matplotlib backend to Qt.
+* Added energy deposit table
+* Changed matplotlib backend to Qt.
 
 Usage
 -------
-In addition to the human torso the geonetry of the Radiation Assessment Detector (RAD) (see http://mslrad.boulder.swri.edu/) is also available. The simulation setup can be defined in `config.py`.
+In addition to the human torso the geonetry of the Radiation Assessment Detector (RAD) (see http://mslrad.boulder.swri.edu/) is also available. The simulation setup can be defined in `settings.py`.
 Set a human body via `WORLD = HUMAN`, set RAD via `WORLD = RAD`.
 
 Install
