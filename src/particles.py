@@ -21,9 +21,10 @@ class Particle(object):
         self.pos_y = pos[1]
         self.dir = direction
 
-        self.path = []
-        self.dE = []
+        self.world = None
 
+    def set_world(self, world):
+        self.world = world
     def step(self, ds):
         """
         Make a ds step, return new pos and energy loss
@@ -64,8 +65,7 @@ class ChargedParticle(Particle):
         Beethe Bloch
         """
         from numpy import log
-        from config import WORLD
-        mexpot, edens = WORLD.get_mexpot_edens(self.pos_x, self.pos_y)
+        mexpot, edens = self.world.get_mexpot_edens(self.pos_x, self.pos_y)
         v = self.get_velocity()
         z = self.charge/q_e
         beta = v/c_light
@@ -81,9 +81,8 @@ class Neutron(Particle):
         straggeling
         """
         from numpy.random import rand
-        from config import WORLD
         dE = 0
-        for mfp in WORLD.get_neutron_mfp(self.pos_x, self.pos_y, self.energy):
+        for mfp in self.world.get_neutron_mfp(self.pos_x, self.pos_y, self.energy):
             if ds/mfp> rand():
                 dE += min((20*MeV, self.energy*rand()))
             if dE > 10*keV:
@@ -100,9 +99,8 @@ class Gamma(Particle):
         0.1MeV as photo ionization.
         """
         from numpy.random import rand
-        from config import WORLD
         dE = 0
-        for mfp in WORLD.get_gamma_mfp(self.pos_x, self.pos_y, self.energy):
+        for mfp in self.get_gamma_mfp(self.pos_x, self.pos_y, self.energy):
             if ds/mfp> rand(): #Crappy way to 'simulate' photo ionization 
                 if self.energy < 0.1*MeV:
                     dE += self.energy
