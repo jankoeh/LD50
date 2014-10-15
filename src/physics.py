@@ -113,6 +113,8 @@ class Volume(object):
         Returns a list of [[image fn, scaling factor, offset]]
         """
         return [[self.fn_image, self.bbox]]
+    def get_name(self):
+        return [self.name]
 
 
 class MotherVolume(Volume):
@@ -215,4 +217,13 @@ class MotherVolume(Volume):
         self.bbox = (bboxes[:,0].min(), bboxes[:,1].min(),  #x0, y0
                      bboxes[:,2].max(), bboxes[:,3].max()) #x1, y1
 
+    def get_name(self):
+        """
+        Returns a list of names for all volumes
+        """
+        names = []
+        for volume in self.volumes:
+            names += volume.get_name()
+        return names
+            
 

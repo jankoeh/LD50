@@ -9,10 +9,13 @@ from src.materials import TABLE as m_tbl
 
 HUMAN = MotherVolume([Volume('gfx/torso2.png', 'Body', m_tbl['H2O'])])
 
-ABC = Volume("gfx/RAD_ABC.png", "ABC", m_tbl['Silicon'], s2px=1192./16/cm)
+A = Volume("gfx/RAD_A.png", "A", m_tbl['Silicon'], s2px=1192./16/cm)
+B = Volume("gfx/RAD_B.png", "B", m_tbl['Silicon'], s2px=1192./16/cm)
+C = Volume("gfx/RAD_C.png", "C", m_tbl['Silicon'], s2px=1192./16/cm)
 D = Volume("gfx/RAD_D.png", "D", m_tbl['CsI'], s2px=1192./16/cm)
-EF = Volume("gfx/RAD_EF.png", "EF", m_tbl['H2O'], s2px=1192./16/cm)
-RAD = MotherVolume([ABC, D, EF])
+E = Volume("gfx/RAD_E.png", "E", m_tbl['H2O'], s2px=1192./16/cm)
+F = Volume("gfx/RAD_F.png", "F", m_tbl['H2O'], s2px=1192./16/cm)
+RAD = MotherVolume([A, B, C, D, E, F])
 
 #Define your WORLD here
-WORLD = RAD
+WORLD = HUMAN

@@ -13,7 +13,7 @@ Changed matplotlib backend to Qt.
 
 Usage
 -------
-In addition to the human torso the geonetry of the Radiation Assessment Detector (RAD) (see http://mslrad.boulder.swri.edu/) is also available. The simulation setup can be defined in `setup.py`.
+In addition to the human torso the geonetry of the Radiation Assessment Detector (RAD) (see http://mslrad.boulder.swri.edu/) is also available. The simulation setup can be defined in `config.py`.
 Set a human body via `WORLD = HUMAN`, set RAD via `WORLD = RAD`.
 
 Install
