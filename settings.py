@@ -16,6 +16,3 @@ D = Volume("gfx/RAD_D.png", "D", m_tbl['CsI'], s2px=1192./16/cm)
 E = Volume("gfx/RAD_E.png", "E", m_tbl['H2O'], s2px=1192./16/cm)
 F = Volume("gfx/RAD_F.png", "F", m_tbl['H2O'], s2px=1192./16/cm)
 RAD = MotherVolume([A, B, C, D, E, F])
-
-#Define your WORLD here
-WORLD = HUMAN

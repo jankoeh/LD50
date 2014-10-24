@@ -19,7 +19,7 @@ class ParticleCanvas(QtGui.QGraphicsView):
         self.setHorizontalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
         self.setVerticalScrollBarPolicy(QtCore.Qt.ScrollBarAlwaysOff)
 
-        self.WORLD = None
+        self.world = None
         self.p_dots = []
         self.dmg_dots = []
         self.p_pen = QtGui.QPen(QtGui.QColor(0,0,255,0))
@@ -28,19 +28,19 @@ class ParticleCanvas(QtGui.QGraphicsView):
         self.dmg_brush = QtGui.QBrush(QtGui.QColor(255,0,0,100))
 
     def set_world(self, world):
-        self.WORLD = world
-        x0, y0, x1, y1 = self.WORLD.bbox
+        self.world = world
+        x0, y0, x1, y1 = self.world.bbox
         self.s2px = min([self.max_width/(x1-x0), self.max_height/(y1-y0)])
         self.create_scene()
         
     def create_scene(self):
         scene = QtGui.QGraphicsScene()
-        for fn_image, bbox in self.WORLD.get_image_info():
+        for fn_image, bbox in self.world.get_image_info():
             image = QtGui.QPixmap(fn_image)
             x0, y0, x1, y1 = bbox
             image = image.scaled((x1-x0)*self.s2px, (y1-y0)*self.s2px)
             s_image = scene.addPixmap(image)
-            y_offset = (self.WORLD.bbox[3]-y1)*self.s2px
+            y_offset = (self.world.bbox[3]-y1)*self.s2px
             s_image.setOffset(x0*self.s2px,y_offset)
         self.setScene(scene)
 
@@ -48,7 +48,7 @@ class ParticleCanvas(QtGui.QGraphicsView):
         """ 
         Transforms world coordninates to image based coordinates
         """
-        x0, y0, x1, y1 = self.WORLD.bbox
+        x0, y0, x1, y1 = self.world.bbox
         return (pos_x-x0)*self.s2px, (y1-pos_y)*self.s2px
         
     def add_particle(self, particle):

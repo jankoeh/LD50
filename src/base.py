@@ -46,7 +46,7 @@ class RunManager():
         If no canvas is defined - the RunMAnager will provide no grafical output
         """
         if not self.world:
-            print "WORLD not set"
+            print "world not set"
             raise 
         self.canvas = canvas
         self.canvas.set_world(self.world)

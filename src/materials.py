@@ -197,4 +197,5 @@ TABLE['CsI'] = CesiumIodide()
 TABLE['Silicon'] = Material(14, 28.085, 2.336*g/cm3 ,
                             "X-sections/n_X_section_Si.txt", 
                             "X-sections/g_X_section_Si.txt" )
+TABLE['Vacuum'] = Material(1, 1 , 1e-30*g/cm3)                            
             

@@ -16,7 +16,7 @@
    version="1.1"
    inkscape:version="0.48.5 r10040"
    sodipodi:docname="RAD.svg"
-   inkscape:export-filename="/home/sinus/koehler/Dropbox/PyProjekte/LD50/gfx/RAD_F.png"
+   inkscape:export-filename="/home/sinus/koehler/Dropbox/PyProjekte/LD50/gfx/RAD_BG.png"
    inkscape:export-xdpi="90"
    inkscape:export-ydpi="90">
   <defs
@@ -28,9 +28,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.70840002"
-     inkscape:cx="623.38323"
-     inkscape:cy="561.6064"
+     inkscape:zoom="0.35420001"
+     inkscape:cx="1030.8578"
+     inkscape:cy="936.32186"
      inkscape:document-units="px"
      inkscape:current-layer="layer8"
      showgrid="false"
@@ -61,17 +61,26 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
   <g
      inkscape:groupmode="layer"
      id="layer8"
-     inkscape:label="Housing">
+     inkscape:label="Housing"
+     style="display:inline"
+     sodipodi:insensitive="true">
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:none"
+       id="rect3772"
+       width="892.22217"
+       height="1090.9344"
+       x="0.28196621"
+       y="0.26301274" />
     <path
-       style="fill:none;stroke:#808080;stroke-width:10;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
-       d="m 242.85714,96.91179 0,400 -160,200 0,312.00001 730,0 0,-312.00001 -160,-200 0,-400"
+       style="fill:#cccccc;fill-opacity:1;stroke:none"
+       d="m 242.85714,96.91179 4,417.99972 -146,200.00028 0,276.00001 692,-4 0,-270.00001 -140,-202.00028 0,-417.99972"
        id="path3005"
        inkscape:connector-curvature="0"
        sodipodi:nodetypes="cccccccc" />
@@ -96,7 +105,7 @@
      inkscape:groupmode="layer"
      id="layer1"
      transform="translate(102.85714,-115.45041)"
-     style="display:inline"
+     style="display:none"
      sodipodi:insensitive="true">
     <rect
        style="fill:#2a7fff;fill-opacity:1;stroke:#ffffff;stroke-width:0;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
@@ -124,7 +133,7 @@
      inkscape:groupmode="layer"
      id="layer6"
      inkscape:label="B"
-     style="display:inline"
+     style="display:none"
      sodipodi:insensitive="true">
     <rect
        transform="translate(102.85714,-115.45041)"
@@ -155,7 +164,7 @@
      inkscape:groupmode="layer"
      id="layer7"
      inkscape:label="C"
-     style="display:inline"
+     style="display:none"
      sodipodi:insensitive="true">
     <rect
        transform="translate(102.85714,-115.45041)"
@@ -190,7 +199,7 @@
      inkscape:groupmode="layer"
      id="layer3"
      inkscape:label="D"
-     style="display:inline"
+     style="display:none"
      sodipodi:insensitive="true"
      transform="translate(-0.4866071,-100.04416)">
     <path
@@ -204,7 +213,7 @@
      inkscape:groupmode="layer"
      id="layer4"
      inkscape:label="E"
-     style="display:inline"
+     style="display:none"
      transform="translate(-0.4866071,-100.04416)"
      sodipodi:insensitive="true">
     <rect
@@ -220,7 +229,7 @@
      inkscape:groupmode="layer"
      id="layer5"
      inkscape:label="F"
-     style="display:inline"
+     style="display:none"
      sodipodi:insensitive="true">
     <path
        transform="translate(102.85714,-115.45041)"

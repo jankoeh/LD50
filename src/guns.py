@@ -50,7 +50,7 @@ def gen_beam_top(bbox):
     Args:
     -----
     bbox : tuple
-        The WORLDs bbox
+        The worlds bbox
         
     Returns:
     --------
@@ -72,7 +72,7 @@ def gen_beam_left(bbox):
     Args:
     -----
     bbox : tuple
-        The WORLDs bbox
+        The worlds bbox
         
     Returns:
     --------
@@ -93,7 +93,7 @@ def gen_beam_right(bbox):
     Args:
     -----
     bbox : tuple
-        The WORLDs bbox
+        The worlds bbox
         
     Returns:
     --------
@@ -115,7 +115,7 @@ def gen_isotrop(bbox):
     Args:
     -----
     bbox : tuple
-        The WORLDs bbox
+        The worlds bbox
         
     Returns:
     --------
