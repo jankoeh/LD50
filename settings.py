@@ -16,3 +16,8 @@ D = Volume("gfx/RAD_D.png", "D", m_tbl['CsI'], s2px=1192./16/cm)
 E = Volume("gfx/RAD_E.png", "E", m_tbl['H2O'], s2px=1192./16/cm)
 F = Volume("gfx/RAD_F.png", "F", m_tbl['H2O'], s2px=1192./16/cm)
 RAD = MotherVolume([A, B, C, D, E, F])
+
+
+CANCER_BG = Volume("gfx/cancer_bg.png", "Gesundes Gewebe", m_tbl['H2O'], s2px=700./16/cm)
+CANCER_FG = Volume("gfx/cancer_fg.png", "Krankes gewebe", m_tbl['H2O'], s2px=700./16/cm)
+CANCER = MotherVolume([CANCER_BG, CANCER_FG])

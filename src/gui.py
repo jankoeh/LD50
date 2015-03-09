@@ -145,7 +145,7 @@ class ApplicationWindow(QtGui.QMainWindow):
         l = QtGui.QHBoxLayout(self.main_widget)
         l.addWidget(left_widget)#ui_widget)
         l.addWidget(self.rad_plot)
-
+        self.main_widget.setLayout(l)
         self.main_widget.setFocus()
         self.setCentralWidget(self.main_widget)
 

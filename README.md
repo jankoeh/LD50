@@ -14,8 +14,8 @@ Updates
 
 Usage
 -------
-In addition to the human torso the geonetry of the Radiation Assessment Detector (RAD) (see http://mslrad.boulder.swri.edu/) is also available. The simulation setup can be defined in `settings.py`.
-Set a human body via `WORLD = HUMAN`, set RAD via `WORLD = RAD`.
+In addition to the human torso and the cancer therapy example the geonetry of the Radiation Assessment Detector (RAD) (see http://mslrad.boulder.swri.edu/) is also available. The simulation setup can be defined in `LD50.py`.
+Set a human body via importing `HUMAN`, `CANCER` or `RAD` as `geometry`.
 
 Install
 -------
