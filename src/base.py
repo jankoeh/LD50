@@ -75,7 +75,7 @@ class RunManager():
             if dE/MeV > 0.001:
                 pos_edep.append((pos_x, pos_y, dE))
                 volume = self.world.get_volume(pos_x, pos_y)
-                if volume:
+                if volume and volume.name not in ['Background']: #for now the background is excluded
                     i = self.names.index(volume.name)
                     self.edeps[i]+=dE/MeV
             if particle.energy <= 1*eV or \

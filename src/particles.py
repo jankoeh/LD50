@@ -101,9 +101,11 @@ class Gamma(Particle):
         from numpy.random import rand
         dE = 0
         for mfp in self.world.get_gamma_mfp(self.pos_x, self.pos_y, self.energy):
-            if ds/mfp> rand(): #Crappy way to 'simulate' photo ionization 
+            if ds/mfp > rand(): #Crappy way to 'simulate' photo ionization 
                 if self.energy < 0.1*MeV:
                     dE += self.energy
+                elif self.energy < 3.*MeV:
+                    dE += self.energy*(.5+rand()/2)
                 else:
                     dE +=  min((20*MeV, self.energy*rand()/2))
             if dE > 10*keV:
