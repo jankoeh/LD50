@@ -15,7 +15,9 @@ Updates
 Usage
 -------
 In addition to the human torso and the cancer therapy example the geonetry of the Radiation Assessment Detector (RAD) (see http://mslrad.boulder.swri.edu/) is also available. The simulation setup can be defined in `LD50.py`.
-Set a human body via importing `HUMAN`, `CANCER`, `RPI`, or `RAD` as `geometry`.
+Set a geometry via importing `HUMAN`, `CANCER`, `RPI`, or `RAD` as `geometry`.
+The RAD and `RPI` geometry the can be executed directly via `rad.pyw`, `rpi.pyw`.
+
 
 Install
 -------
