@@ -104,6 +104,7 @@ class ApplicationWindow(QtGui.QMainWindow):
         self.selector = QtGui.QComboBox()
         from src.particles import TABLE as p_tbl
         self.selector.addItems(p_tbl.keys())
+        self.selector.currentIndexChanged.connect(self.change_radiation_type)
         
         ui_grid.addWidget(self.selector, 0, 1)
         ui_grid.addWidget(QtGui.QLabel("Energie / MeV"), 1, 0)
@@ -186,6 +187,19 @@ Ein Tool zur Visualisierung von Strahlenschäden .
         particle = str(self.selector.currentText())
         self.run_manager.add_particle(p_tbl[particle](energy*MeV, pos, dir))
 
+    def change_radiation_type(self):
+        if str(self.selector.currentText()) == 'kosmisches Muon':
+            self.b_size.setValue(1000)
+            self.energy.setText("2000")
+            self.sel_dir.setCurrentIndex(self.sel_dir.findText("Hoehenstrahlung"))
+        elif str(self.selector.currentText()) == 'Gammazerfall':
+            self.b_size.setValue(1000)
+            self.energy.setText("2")
+            self.sel_dir.setCurrentIndex(self.sel_dir.findText("Isotrop"))
+        elif str(self.selector.currentText()) == 'Alphazerfall':
+            self.b_size.setValue(100)
+            self.energy.setText("6")
+            self.sel_dir.setCurrentIndex(self.sel_dir.findText("Isotrop"))            
 
 def start_gui(run_manager):
     """

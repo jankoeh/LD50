@@ -29,15 +29,13 @@ def cos_law():
 
 def cos_square():
     """
-    Returns a cosine law angle.
-    Used to generate an isotropic distribution
     """
     from numpy.random import rand
     from numpy import sin, cos, pi
     while True:
         theta = 0.5*rand()*pi
         y = rand()
-        if y < cos(theta)**2*sin(theta):
+        if y < cos(theta)**2:#*sin(theta):
             break
     if rand() > .5:
         theta *= -1
@@ -143,8 +141,30 @@ def gen_isotrop(bbox):
         pos_x = x0 + rand()*(x1-x0)
         pos_y = y0  
     return [pos_x, pos_y], dir
+
+def gen_cos2(bbox):
+    """
+    Returns an cos2 radiation field
+    
+    Args:
+    -----
+    bbox : tuple
+        The worlds bbox
+        
+    Returns:
+    --------
+    pos, dir : list, float
+        pos is the [x, y] position, dir the angle
+    """    
+    from .physics import deg
+    from numpy.random import rand
+    x0, y0, x1, y1 = bbox    
+    dir = cos_square() + 270*deg
+    pos_x = x0 + (.2  + .6*rand())*(x1-x0)
+    return [pos_x, y1], dir
     
 TABLE['Isotrop'] = gen_isotrop
 TABLE['Strahl von Oben'] = gen_beam_top
 TABLE['Strahl von Links'] = gen_beam_left
 TABLE['Strahl von Rechts'] = gen_beam_right
+TABLE['Hoehenstrahlung'] = gen_cos2

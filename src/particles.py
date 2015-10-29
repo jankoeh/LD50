@@ -139,9 +139,24 @@ TABLE['Muon'] = lambda energy, pos, dir: ChargedParticle(m_muon,
                                                          energy,
                                                          pos, 
                                                          dir)
+TABLE['kosmisches Muon'] = lambda energy, pos, dir: ChargedParticle(m_muon, 
+                                                         q_e, 
+                                                         energy,
+                                                         pos, 
+                                                         dir)
+
 TABLE['Neutron'] = lambda energy, pos, dir: Neutron(energy,
                                                     pos, 
                                                     dir)
 TABLE['Gamma'] = lambda energy, pos, dir: Gamma(energy, 
                                                 pos, 
                                                 dir)
+TABLE['Gammazerfall'] = lambda energy, pos, dir: Gamma(energy, 
+                                                pos, 
+                                                dir)
+                                                
+TABLE['Alphazerfall'] = lambda energy, pos, dir: ChargedParticle(6*amu, 
+                                                                12*q_e, 
+                                                                energy,
+                                                                pos, 
+                                                                dir)                                                

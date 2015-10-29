@@ -29,10 +29,10 @@
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4168"
-     inkscape:cx="327.2751"
-     inkscape:cy="317.31654"
+     inkscape:cx="213.28583"
+     inkscape:cy="315.90491"
      inkscape:document-units="px"
-     inkscape:current-layer="layer8"
+     inkscape:current-layer="layer7"
      showgrid="false"
      fit-margin-top="0"
      fit-margin-left="0"
@@ -69,8 +69,9 @@
      inkscape:groupmode="layer"
      id="layer8"
      inkscape:label="Housing"
-     style="display:inline"
-     transform="translate(-0.28196621,-591.73676)">
+     style="display:none"
+     transform="translate(-0.28196621,-591.73676)"
+     sodipodi:insensitive="true">
     <rect
        style="fill:#ffffff;fill-opacity:1;stroke:none"
        id="rect3772"
@@ -148,16 +149,15 @@
      inkscape:groupmode="layer"
      id="layer7"
      inkscape:label="C"
-     style="display:none"
-     transform="translate(-0.28196621,-591.73676)"
-     sodipodi:insensitive="true">
+     style="display:inline"
+     transform="translate(-0.28196621,-591.73676)">
     <rect
        style="display:inline;fill:#44aa00;fill-opacity:1;stroke:#44aa00;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        id="rect3839-3-7"
        width="178.797"
-       height="13.131981"
+       height="7.9999924"
        x="169.11012"
-       y="765.80029" />
+       y="770.93231" />
   </g>
   <g
      inkscape:groupmode="layer"
