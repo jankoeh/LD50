@@ -4,7 +4,7 @@ Created on Wed Oct 15 14:37:49 2014
 
 @author: koehler
 """
-
+from __future__ import unicode_literals
 from PyQt4 import QtGui, QtCore
 
 class ParticleCanvas(QtGui.QGraphicsView):
@@ -104,10 +104,10 @@ class ApplicationWindow(QtGui.QMainWindow):
         self.selector = QtGui.QComboBox()
         from src.particles import TABLE as p_tbl
         self.selector.addItems(p_tbl.keys())
-        self.selector.currentIndexChanged.connect(self.change_radiation_type)
+        self.selector.currentIndexChanged.connect(self.set_rad_setting)
         
         ui_grid.addWidget(self.selector, 0, 1)
-        ui_grid.addWidget(QtGui.QLabel("Energie / MeV"), 1, 0)
+        ui_grid.addWidget(QtGui.QLabel("Energie / MeV:"), 1, 0)
         self.energy = QtGui.QLineEdit("100")
         ui_grid.addWidget(self.energy, 1, 1)
 
@@ -116,10 +116,10 @@ class ApplicationWindow(QtGui.QMainWindow):
         from src.guns import TABLE as g_tbl
         self.sel_dir.addItems(g_tbl.keys())
         ui_grid.addWidget(self.sel_dir, 2, 1)
-        ui_grid.addWidget(QtGui.QLabel(u"Größe Darstellung:"), 3, 0)
+        ui_grid.addWidget(QtGui.QLabel(u"Schadensskalierung:"), 3, 0)
         self.b_size = QtGui.QSpinBox()
         self.b_size.setMinimum(1)
-        self.b_size.setMaximum(1000)
+        self.b_size.setMaximum(5000)
         self.b_size.setValue(100)
         ui_grid.addWidget(self.b_size, 3, 1)
         ui_grid.setRowMinimumHeight(4, 20)
@@ -153,7 +153,7 @@ class ApplicationWindow(QtGui.QMainWindow):
         self.run_manager = run_manager
         run_manager.set_energy_tbl(energy_tbl)
         run_manager.set_canvas(self.rad_plot)
-        
+        self.set_rad_setting()
 
     def fileQuit(self):
         self.close()
@@ -178,28 +178,39 @@ Ein Tool zur Visualisierung von Strahlenschäden .
     def particle_generator(self):
         from src.physics import MeV
         self.rad_plot.size = float(self.b_size.text())
-        energy = float(self.energy.text())
+        energy = self.energy.text().replace(',', '.')
+        if len(energy.split('-')) == 2:
+            from numpy.random import rand
+            e1 = float(energy.split('-')[0])
+            e2 = float(energy.split('-')[1])
+            energy = e1*(e2/e1)**rand() #-1 power law
+        else:
+            energy = float(self.energy.text())
         from src.guns import TABLE as g_tbl
-        gun = str(self.sel_dir.currentText())
+        gun = unicode(self.sel_dir.currentText())
         pos, dir = g_tbl[gun](self.run_manager.world.bbox)
 
         from src.particles import TABLE as p_tbl
         particle = str(self.selector.currentText())
         self.run_manager.add_particle(p_tbl[particle](energy*MeV, pos, dir))
 
-    def change_radiation_type(self):
+    def set_rad_setting(self):
         if str(self.selector.currentText()) == 'kosmisches Muon':
             self.b_size.setValue(1000)
-            self.energy.setText("2000")
-            self.sel_dir.setCurrentIndex(self.sel_dir.findText("Hoehenstrahlung"))
+            self.energy.setText("1000-10000")
+            self.sel_dir.setCurrentIndex(self.sel_dir.findText(u"Höhenstrahlung"))
         elif str(self.selector.currentText()) == 'Gammazerfall':
             self.b_size.setValue(1000)
-            self.energy.setText("2")
+            self.energy.setText("0.1-3")
             self.sel_dir.setCurrentIndex(self.sel_dir.findText("Isotrop"))
         elif str(self.selector.currentText()) == 'Alphazerfall':
             self.b_size.setValue(100)
-            self.energy.setText("6")
-            self.sel_dir.setCurrentIndex(self.sel_dir.findText("Isotrop"))            
+            self.energy.setText("1-6")
+            self.sel_dir.setCurrentIndex(self.sel_dir.findText("Isotrop"))
+        elif str(self.selector.currentText()) == 'X-Ray':
+            self.b_size.setValue(4000)
+            self.energy.setText("0.01-0.25")
+            self.sel_dir.setCurrentIndex(self.sel_dir.findText("Isotrop"))
 
 def start_gui(run_manager):
     """

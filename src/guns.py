@@ -31,7 +31,7 @@ def cos_square():
     """
     """
     from numpy.random import rand
-    from numpy import sin, cos, pi
+    from numpy import cos, pi
     while True:
         theta = 0.5*rand()*pi
         y = rand()
@@ -163,8 +163,8 @@ def gen_cos2(bbox):
     pos_x = x0 + (.2  + .6*rand())*(x1-x0)
     return [pos_x, y1], dir
     
-TABLE['Isotrop'] = gen_isotrop
-TABLE['Strahl von Oben'] = gen_beam_top
-TABLE['Strahl von Links'] = gen_beam_left
-TABLE['Strahl von Rechts'] = gen_beam_right
-TABLE['Hoehenstrahlung'] = gen_cos2
+TABLE[u'Isotrop'] = gen_isotrop
+TABLE[u'Strahl von Oben'] = gen_beam_top
+TABLE[u'Strahl von Links'] = gen_beam_left
+TABLE[u'Strahl von Rechts'] = gen_beam_right
+TABLE[u'Höhenstrahlung'] = gen_cos2

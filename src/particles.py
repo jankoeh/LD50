@@ -154,9 +154,11 @@ TABLE['Gamma'] = lambda energy, pos, dir: Gamma(energy,
 TABLE['Gammazerfall'] = lambda energy, pos, dir: Gamma(energy, 
                                                 pos, 
                                                 dir)
-                                                
+TABLE['X-Ray'] = lambda energy, pos, dir: Gamma(energy, 
+                                                pos, 
+                                                dir)                                                
 TABLE['Alphazerfall'] = lambda energy, pos, dir: ChargedParticle(6*amu, 
                                                                 12*q_e, 
                                                                 energy,
                                                                 pos, 
-                                                                dir)                                                
+                                                                dir)                                               
