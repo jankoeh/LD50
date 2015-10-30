@@ -30,14 +30,14 @@ class RunManager():
         from PyQt4 import QtGui
         self.names = self.world.get_name()
         self.energy_tbl = energy_tbl
-        energy_tbl.setColumnCount(2)
+        energy_tbl.setColumnCount(2)        
         energy_tbl.setRowCount(len(self.names))
         for i in xrange(len(self.names)):
             energy_tbl.setItem(i, 0, QtGui.QTableWidgetItem(self.names[i]))
             self.edeps.append(0)
         energy_tbl.setHorizontalHeaderLabels(('Detektor', 'Energiedeposit / MeV'))
-        energy_tbl.setColumnWidth(0, 100)
-        energy_tbl.setColumnWidth(1, 152)
+        energy_tbl.horizontalHeader().setResizeMode(0, QtGui.QHeaderView.Stretch)
+        energy_tbl.horizontalHeader().setResizeMode(1, QtGui.QHeaderView.Stretch)
         self.update_energy_tbl()
         
     def set_canvas(self, canvas):
