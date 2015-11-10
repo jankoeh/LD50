@@ -9,6 +9,7 @@ particles.TABLE.pop("Alpha")
 particles.TABLE.pop("Gamma")
 particles.TABLE.pop("Muon")
 particles.TABLE.pop("Proton")
+particles.TABLE.pop('Neutron')
 
 run_manager = RunManager(geometry)
 start_gui(run_manager)

@@ -207,6 +207,10 @@ Ein Tool zur Visualisierung von Strahlenschäden .
             self.b_size.setValue(100)
             self.energy.setText("1-6")
             self.sel_dir.setCurrentIndex(self.sel_dir.findText("Isotrop"))
+        elif str(self.selector.currentText()) == 'Betazerfall':
+            self.b_size.setValue(1000)
+            self.energy.setText("1-6")
+            self.sel_dir.setCurrentIndex(self.sel_dir.findText("Isotrop"))
         elif str(self.selector.currentText()) == 'X-Ray':
             self.b_size.setValue(4000)
             self.energy.setText("0.01-0.25")

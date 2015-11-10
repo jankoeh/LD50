@@ -162,3 +162,8 @@ TABLE['Alphazerfall'] = lambda energy, pos, dir: ChargedParticle(6*amu,
                                                                 energy,
                                                                 pos, 
                                                                 dir)                                               
+TABLE['Betazerfall'] = lambda energy, pos, dir: ChargedParticle(m_e, 
+                                                             q_e, 
+                                                             energy,
+                                                             pos, 
+                                                             dir)                                                                
